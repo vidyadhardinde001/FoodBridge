@@ -1,89 +1,85 @@
-"use client";
+// frontend/app/page.tsx (Interactive FoodBridge Dashboard with Expandable Sections)
+
 import { useState } from "react";
 import Image from "next/image";
-import SearchAndScan from "./SearchInput";
 
-export default function ProductScanner() {
-  const [search, setSearch] = useState("");
+export default function Home() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  const toggleSection = (section: string) => {
+    setExpanded(expanded === section ? null : section);
+  };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-4">
-      <div className="max-w-[98%] min-h-[50%] mx-auto bg-gray-300 p-4 rounded-lg shadow-lg">
-        <div className="flex justify-end mb-4">
-          <div className="flex gap-2">
-            <button className="bg-gray-600 text-white px-4 py-2 rounded active:scale-95">Login</button>
-            <button className="bg-gray-400 text-black px-4 py-2 rounded active:scale-95">Register</button>
-          </div>
+    <main className="flex min-h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white shadow-md p-4">
+        <h2 className="text-2xl font-bold text-green-600">FoodBridge</h2>
+        <nav className="mt-6">
+          <a className="block p-3 bg-yellow-400 text-white rounded-lg mb-2">Home</a>
+          <a className="block p-3 text-gray-700 hover:bg-gray-200 rounded-lg">About Us</a>
+          <a className="block p-3 text-gray-700 hover:bg-gray-200 rounded-lg">Features</a>
+          <a className="block p-3 text-gray-700 hover:bg-gray-200 rounded-lg">Analytics</a>
+          <a className="block p-3 text-gray-700 hover:bg-gray-200 rounded-lg">Contact</a>
+        </nav>
+      </aside>
+      
+      {/* Main Content */}
+      <div className="flex-1 p-6">
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <button className="px-4 py-2 bg-green-600 text-white rounded-lg">Sign In</button>
+        </header>
+        
+        {/* Action Buttons */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <button onClick={() => toggleSection("addFood")} className="p-4 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2">
+            Add Surplus Food ➕
+          </button>
+          <button onClick={() => toggleSection("searchFood")} className="p-4 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2">
+            Search Available Food 🔍
+          </button>
+          <button onClick={() => toggleSection("donate")} className="p-4 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2">
+            Donate 💰
+          </button>
         </div>
+        
+        {/* Expandable Sections */}
+        {expanded === "addFood" && (
+          <section className="p-6 bg-white shadow-lg rounded-lg">
+            <h3 className="text-xl font-semibold">Add Surplus Food</h3>
+            <form className="mt-4 flex flex-col gap-3">
+              <input type="text" placeholder="Food Name" className="p-2 border rounded-lg" />
+              <input type="text" placeholder="Provider (Restaurant Name)" className="p-2 border rounded-lg" />
+              <input type="text" placeholder="Quantity" className="p-2 border rounded-lg" />
+              <button className="px-4 py-2 bg-green-600 text-white rounded-lg">Submit</button>
+            </form>
+          </section>
+        )}
+        
+        {expanded === "searchFood" && (
+          <section className="p-6 bg-white shadow-lg rounded-lg">
+            <h3 className="text-xl font-semibold">Search Available Food</h3>
+            <input type="text" placeholder="Enter food name or location" className="p-2 border rounded-lg w-full mt-4" />
+          </section>
+        )}
 
-        {/* Main Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Left Sidebar */}
-          <div className="bg-gray-700 text-white p-4 rounded-lg flex flex-col flex-grow">
-            <div className="relative mb-4">
-              <input
-                type="text"
-                placeholder="Search for food items..."
-                className="w-full p-2 rounded bg-gray-800 text-white"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <button className="absolute right-2 top-2 active:scale-95">🔍</button>
-            </div>
-            <div className="flex gap-2 mb-4">
-              <button className="bg-gray-500 p-2 rounded active:scale-95">Scan Barcode</button>
-              <button className="bg-gray-500 p-2 rounded active:scale-95">Scan Ingredients</button>
-            </div>
-            <div className="flex-grow">Product List</div>
-          </div>
-
-          {/* Product Details & Table Section */}
-          <div className="col-span-2 flex flex-col gap-4">
-            <div className="bg-gray-400 p-4 rounded-lg">
-              <div className="flex gap-4">
-                <div className="bg-gray-100 p-2 rounded-lg shadow">
-                  <Image src="/product-image.png" width={150} height={200} alt="Product" />
-                </div>
-                <div className="w-full grid grid-cols-2 gap-2">
-                  <div>Name of Product: <span className="p-2 border rounded bg-white w-full inline-block">Product Name</span></div>
-                  <div>Countries sold in: <span className="p-2 border rounded bg-white w-full inline-block">Country List</span></div>
-                  <div>Category: <span className="p-2 border rounded bg-white w-full inline-block">Category</span></div>
-                  <div>Threatened Species: <span className="p-2 border rounded bg-white w-full inline-block">Species Info</span></div>
-                  <div>Allergens: <span className="p-2 border rounded bg-white w-full inline-block">Allergen Info</span></div>
-                  <div>Packaging: <span className="p-2 border rounded bg-white w-full inline-block">Packaging Info</span></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Ingredient Table */}
-            <div className="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-700">
-                    <th className="p-2">Ingredient</th>
-                    <th className="p-2">%</th>
-                    <th className="p-2">🌿</th>
-                    <th className="p-2">♻️</th>
-                    <th className="p-2">Health Concerns</th>
-                    <th className="p-2">Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border p-2">Matcha</td>
-                    <td className="border p-2">50%</td>
-                    <td className="border p-2">✅</td>
-                    <td className="border p-2">♻️</td>
-                    <td className="border p-2">None</td>
-                    <td className="border p-2">Green tea powder</td>
-                  </tr>
-                  {/* Add more rows dynamically */}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {expanded === "donate" && (
+          <section className="p-6 bg-white shadow-lg rounded-lg">
+            <h3 className="text-xl font-semibold">Donate</h3>
+            <form className="mt-4 flex flex-col gap-3">
+              <input type="text" placeholder="Your Name" className="p-2 border rounded-lg" />
+              <input type="number" placeholder="Donation Amount" className="p-2 border rounded-lg" />
+              <button className="px-4 py-2 bg-green-600 text-white rounded-lg">Donate Now</button>
+            </form>
+          </section>
+        )}
+        
+        {/* Background Image */}
+        <div className="mt-6 rounded-lg overflow-hidden">
+          <Image src="/background.png" alt="Food Donation" width={800} height={400} className="w-full h-auto" />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

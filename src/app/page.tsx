@@ -2,13 +2,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import jwt from "jsonwebtoken";
-import FoodSearch from "@/sections/Food_Search";
 import Hero from "@/sections/Hero";
-import IngredientScanPage from "@/sections/barcode";
-import AI from "@/sections/AI";
-import Main from "@/sections/Main";
-import Login from "@/sections/Login";
-import Test from "@/sections/OpenAITest";
+
 
 import Link from "next/link";
 
@@ -54,8 +49,7 @@ const checkAuth = () => {
 
   return (
     <>
-      <Login />
-      <FoodSearch />
+      <Hero />
     </>
   );
 }
