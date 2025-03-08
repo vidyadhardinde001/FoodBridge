@@ -1,10 +1,38 @@
 // frontend/app/page.tsx (Interactive FoodBridge Dashboard with Expandable Sections)
+"use client"; // Ensure it's a client component
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter(); // Initialize router
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    setIsLoggedIn(!!token);
+
+    const handleStorageChange = () => {
+      const updatedToken = localStorage.getItem("token");
+      const updatedRole = localStorage.getItem("role");
+      setIsLoggedIn(!!updatedToken);
+      setUserRole(updatedRole);
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    window.dispatchEvent(new Event("storage")); // Notify UI
+    router.push("/");
+  };
 
   const toggleSection = (section: string) => {
     setExpanded(expanded === section ? null : section);
@@ -25,10 +53,32 @@ export default function Home() {
       </aside>
       
       {/* Main Content */}
-      <div className="flex-1 p-6">
+     <div className="flex-1 p-6">
         <header className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <button className="px-4 py-2 bg-green-600 text-white rounded-lg">Sign In</button>
+          {isLoggedIn ? (
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+              >
+                Logout
+              </button>
+              <button
+                onClick={() => router.push("/profile")}
+                className="p-2 bg-gray-600 rounded-full text-white hover:bg-gray-700 transition"
+              >
+                👤
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push("/login")}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              Login
+            </button>
+              )}
         </header>
         
         {/* Action Buttons */}
