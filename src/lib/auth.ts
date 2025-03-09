@@ -1,75 +1,25 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import User from "@/models/User";
-import { connectDB } from "@/lib/db";
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { User } from './db';
 
-export const registerUser = async (
-    username: string, 
-    email: string, 
-    password: string, 
-    healthIssues: string[],
-    allergies: string[]
-) => {
-    try {
-        await connectDB();
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return { error: "Email already in use" };
-        }
+const JWT_SECRET = process.env.JWT_SECRET!;
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ 
-            username, 
-            email, 
-            password: hashedPassword, 
-            healthIssues,
-            allergies 
-        });
-        await user.save();
-
-        return { message: "User registered successfully", user };
-    } catch (error) {
-        console.error("Register Error:", error);
-        return { error: "Registration failed" };
-    }
+export const hashPassword = async (password: string) => {
+  return await bcrypt.hash(password, 10);
 };
 
-export const loginUser = async (email: string, password: string) => {
-    try {
-        await connectDB();
-        const user = await User.findOne({ email });
+export const comparePassword = async (password: string, hashedPassword: string) => {
+  return await bcrypt.compare(password, hashedPassword);
+};
 
-        if (!user) {
-            throw new Error("User not found");
-        }
+export const generateToken = (user: any) => {
+  return jwt.sign(
+    { id: user._id, role: user.role, email: user.email },
+    JWT_SECRET,
+    { expiresIn: '1d' }
+  );
+};
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            throw new Error("Invalid credentials");
-        }
-        const secret = process.env.JWT_SECRET;
-
-if (!secret) {
-  throw new Error("JWT_SECRET is not defined in environment variables");
-}
-
-        // Updated JWT payload with health data
-        const token = jwt.sign(
-            { 
-                userId: user._id, 
-                email: user.email,
-                healthData: {
-                    healthIssues: user.healthIssues,
-                    allergies: user.allergies
-                }
-            },
-            process.env.JWT_SECRET!,
-            { expiresIn: "1d" }
-        );
-
-        return token;
-    } catch (error: any) {
-        console.error("Login Error:", error);
-        throw new Error(error.message || "Login failed");
-    }
+export const verifyToken = (token: string) => {
+  return jwt.verify(token, JWT_SECRET);
 };
