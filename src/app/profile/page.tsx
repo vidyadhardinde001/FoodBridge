@@ -1,37 +1,25 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  FaUser,
-  FaWeight,
-  FaHeartbeat,
-  FaUtensils,
-  FaAllergies,
-  FaCheckCircle,
-  FaExclamationTriangle,
-  FaEdit,
-  FaSave,
-} from "react-icons/fa";
+import { FaUser, FaWarehouse, FaHandsHelping, FaEdit, FaSave } from "react-icons/fa";
 
 const Profile = () => {
   const [userData, setUserData] = useState({
-    username: "",
-    age: "",
-    gender: "",
-    weight: "",
-    height: "",
-    activityLevel: "",
-    healthConditions: "",
-    dietaryPreferences: "",
-    allergies: "",
-    knownDeficiencies: "",
-    foodSuggestions: [],
-    foodWarnings: [],
+    organizationName: "",
+    contactPerson: "",
+    contactNumber: "",
+    email: "",
+    location: "",
+    userType: "", // Donor or Charity
+    availableSurplus: "", // For donors
+    requiredItems: "", // For charities
+    capacity: "", // Storage capacity for charities
+    pastDonations: [],
+    pastReceipts: [],
   });
-  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    const savedProfile = localStorage.getItem("userProfile");
+    const savedProfile = localStorage.getItem("foodCharityProfile");
     if (savedProfile) {
       setUserData(JSON.parse(savedProfile));
     }
@@ -42,7 +30,7 @@ const Profile = () => {
   };
 
   const handleSaveProfile = () => {
-    localStorage.setItem("userProfile", JSON.stringify(userData));
+    localStorage.setItem("foodCharityProfile", JSON.stringify(userData));
     setIsEditing(false);
   };
 
@@ -51,26 +39,32 @@ const Profile = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-gradient-to-r from-teal-50 to-white shadow-xl rounded-lg mt-10 border border-gray-300">
-      <h2 className="text-4xl font-extrabold text-teal-700 mb-8 text-center">🍏 Your Health Profile</h2>
+    <div className="max-w-4xl mx-auto p-8 bg-gradient-to-r from-green-50 to-white shadow-xl rounded-lg mt-10 border border-gray-300">
+      <h2 className="text-4xl font-extrabold text-green-700 mb-8 text-center">Profile</h2>
       <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <input type="text" name="username" placeholder="Your Name" value={userData.username} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing} />
-        <input type="number" name="age" placeholder="Age" value={userData.age} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing} />
-        <select name="gender" value={userData.gender} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing}>
-          <option value="">Select Gender</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
+        <input type="text" name="organizationName" placeholder="Organization Name" value={userData.organizationName} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing} />
+        <input type="text" name="contactPerson" placeholder="Contact Person" value={userData.contactPerson} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing} />
+        <input type="text" name="contactNumber" placeholder="Contact Number" value={userData.contactNumber} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing} />
+        <input type="email" name="email" placeholder="Email" value={userData.email} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing} />
+        <input type="text" name="location" placeholder="Location" value={userData.location} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing} />
+        <select name="userType" value={userData.userType} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing}>
+          <option value="">Select User Type</option>
+          <option value="Donor">Food Donor</option>
+          <option value="Charity">Charity</option>
         </select>
-        <input type="number" name="weight" placeholder="Weight (kg)" value={userData.weight} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing} />
-        <input type="number" name="height" placeholder="Height (cm)" value={userData.height} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing} />
-        <textarea name="healthConditions" placeholder="Health Conditions" value={userData.healthConditions} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing}></textarea>
-        <textarea name="dietaryPreferences" placeholder="Dietary Preferences" value={userData.dietaryPreferences} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing}></textarea>
-        <textarea name="allergies" placeholder="Food Allergies" value={userData.allergies} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 shadow-sm" disabled={!isEditing}></textarea>
+        {userData.userType === "Donor" && (
+          <textarea name="availableSurplus" placeholder="Available Surplus (e.g., Vegetables, Dairy)" value={userData.availableSurplus} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing}></textarea>
+        )}
+        {userData.userType === "Charity" && (
+          <>
+            <textarea name="requiredItems" placeholder="Required Food Items" value={userData.requiredItems} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing}></textarea>
+            <input type="number" name="capacity" placeholder="Storage Capacity (kg)" value={userData.capacity} onChange={handleChange} className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 shadow-sm" disabled={!isEditing} />
+          </>
+        )}
       </form>
       <div className="mt-6 flex justify-center">
         {isEditing ? (
-          <button className="px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-500 transition" onClick={handleSaveProfile}>
+          <button className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-500 transition" onClick={handleSaveProfile}>
             <FaSave className="inline-block mr-2" /> Save Profile
           </button>
         ) : (
@@ -80,22 +74,22 @@ const Profile = () => {
         )}
       </div>
       <div className="mt-8 p-6 bg-white rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-teal-700 flex items-center"><FaCheckCircle className="mr-2" /> Recommended Foods</h3>
+        <h3 className="text-xl font-bold text-green-700 flex items-center"><FaWarehouse className="mr-2" /> Past Donations</h3>
         <ul className="list-disc ml-6 mt-2">
-          {userData.foodSuggestions.length > 0 ? userData.foodSuggestions.map((item, i) => (
+          {userData.pastDonations.length > 0 ? userData.pastDonations.map((item, i) => (
             <li key={i} className="text-gray-600">{item}</li>
           )) : (
-            <p className="text-gray-500">Fill out your profile to get recommendations.</p>
+            <p className="text-gray-500">No donations yet.</p>
           )}
         </ul>
       </div>
-      <div className="mt-6 p-6 bg-red-100 rounded-lg shadow-md border border-red-300">
-        <h3 className="text-xl font-bold text-red-700 flex items-center"><FaExclamationTriangle className="mr-2" /> ⚠️ Foods to Avoid</h3>
+      <div className="mt-6 p-6 bg-blue-100 rounded-lg shadow-md border border-blue-300">
+        <h3 className="text-xl font-bold text-blue-700 flex items-center"><FaHandsHelping className="mr-2" /> Past Receipts</h3>
         <ul className="list-disc ml-6 mt-2">
-          {userData.foodWarnings.length > 0 ? userData.foodWarnings.map((item, i) => (
-            <li key={i} className="text-red-600">{item}</li>
+          {userData.pastReceipts.length > 0 ? userData.pastReceipts.map((item, i) => (
+            <li key={i} className="text-blue-600">{item}</li>
           )) : (
-            <p className="text-gray-600">No warnings yet. Provide health details for better accuracy.</p>
+            <p className="text-gray-600">No received items yet.</p>
           )}
         </ul>
       </div>
