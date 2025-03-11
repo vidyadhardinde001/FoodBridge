@@ -1,3 +1,5 @@
+// lib/db.ts
+
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI!;
@@ -27,6 +29,31 @@ const UserSchema = new mongoose.Schema<UserDocument>({
 });
 
 export const User = mongoose.models.User || mongoose.model<UserDocument>('User', UserSchema);
+
+// Add to existing User schema
+interface FoodDocument extends mongoose.Document {
+  foodName: string;
+  quantity: string;
+  status: 'available' | 'pending' | 'picked_up';
+  pickupLocation: string;
+  description: string;
+  provider: mongoose.Types.ObjectId;
+  charity?: mongoose.Types.ObjectId;
+  createdAt: Date;
+}
+
+const FoodSchema = new mongoose.Schema<FoodDocument>({
+  foodName: { type: String, required: true },
+  quantity: { type: String, required: true },
+  status: { type: String, enum: ['available', 'pending', 'picked_up'], default: 'available' },
+  pickupLocation: { type: String, required: true },
+  description: { type: String, required: true },
+  provider: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  charity: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+export const Food = mongoose.models.Food || mongoose.model<FoodDocument>('Food', FoodSchema);
 
 export const connectDB = async () => {
   try {

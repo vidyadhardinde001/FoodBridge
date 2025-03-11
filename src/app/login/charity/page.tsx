@@ -34,7 +34,7 @@ export default function ProviderLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold text-green-600 mb-6">Provider Login</h2>
+        <h2 className="text-2xl font-bold text-green-600 mb-6">Charity Login</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
@@ -62,7 +62,7 @@ export default function ProviderLogin() {
         </form>
         <p className="mt-4 text-center">
           Don't have an account?{' '}
-          <Link href="/register/provider" className="text-green-600 hover:underline">
+          <Link href="/register/charity" className="text-green-600 hover:underline">
             Register here
           </Link>
         </p>

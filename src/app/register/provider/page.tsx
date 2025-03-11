@@ -10,7 +10,6 @@ export default function CharityRegister() {
     password: '',
     phone: '',
     address: '',
-    organizationName: ''
   });
   const [error, setError] = useState('');
   const router = useRouter();
@@ -22,8 +21,7 @@ export default function CharityRegister() {
         !formData.email ||
         !formData.password ||
         !formData.phone ||
-        !formData.address ||
-        !formData.organizationName
+        !formData.address 
       ) {
         setError('All fields are required');
         return;
@@ -49,7 +47,7 @@ export default function CharityRegister() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold text-green-600 mb-6">Charity Registration</h2>
+        <h2 className="text-2xl font-bold text-green-600 mb-6">Provider Registration</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
         <input
             type="text"
@@ -60,14 +58,7 @@ export default function CharityRegister() {
             className="w-full p-2 border rounded-lg"
             required
           />
-          <input
-            type="text"
-            placeholder="Organization Name"
-            name="organizationName"
-            onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-            className="w-full p-2 border rounded-lg"
-            required
-          />
+          
           <input
             type="email"
             placeholder="Email"
@@ -110,7 +101,7 @@ export default function CharityRegister() {
         </form>
         <p className="mt-4 text-center">
           Already have an account?{' '}
-          <Link href="/login/charity" className="text-green-600 hover:underline">
+          <Link href="/login/provider" className="text-green-600 hover:underline">
             Login here
           </Link>
         </p>

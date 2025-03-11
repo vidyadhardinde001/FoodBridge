@@ -1,9 +1,41 @@
-// app/dashboard/charity/page.tsx
+// dashboard/charity/page.tsx
+
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function CharityDashboard() {
   const [search, setSearch] = useState('');
+  const [foods, setFoods] = useState([]);
+
+  useEffect(() => {
+    const fetchFoods = async () => {
+      const res = await fetch('/api/food');
+      const data = await res.json();
+      setFoods(data);
+    };
+    fetchFoods();
+  }, []);
+
+  const handleRequest = async (foodId: any) => {
+    try {
+      const res = await fetch(`/api/food/${foodId}/request`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+  
+      if (res.ok) {
+        const updatedFood = await res.json();
+        setFoods(foods.map(f => f._id === foodId ? updatedFood : f));
+      } else {
+        const data = await res.json();
+        console.error('Request failed:', data.error);
+      }
+    } catch (error) {
+      console.error('Request failed:', error);
+    }
+  };
 
   return (
     <>
@@ -32,13 +64,22 @@ export default function CharityDashboard() {
 
       {/* Food Cards Grid */}
       <div className="grid grid-cols-3 gap-4">
-        {[...Array(6)].map((_, index) => (
-          <div key={index} className="bg-gray-300 p-4 rounded-lg shadow">
-            <p className="font-semibold">*Sample location</p>
-            <p>*Provider name</p>
-            <p>*Quantity</p>
-          </div>
-        ))}
+        {foods
+          .filter(food => food.status === 'available')
+          .map(food => (
+            <div key={food._id} className="bg-white p-4 rounded-lg shadow">
+              <h3 className="font-semibold">{food.foodName}</h3>
+              <p>Quantity: {food.quantity}</p>
+              <p>Location: {food.pickupLocation}</p>
+              <p>Description: {food.description}</p>
+              <button
+                onClick={() => handleRequest(food._id)}
+                className="mt-2 bg-green-600 text-white px-4 py-2 rounded"
+              >
+                Request Pickup
+              </button>
+            </div>
+          ))}
       </div>
     </>
   );
