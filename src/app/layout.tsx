@@ -10,7 +10,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "IngredientIQ",
+  title: "FoodBridge",
   description: ".",
 };
 
