@@ -14,17 +14,23 @@ export default function ProviderDashboard() {
   const [marker, setMarker] = useState<any>(null);
 
   useEffect(() => {
-    // Load Google Maps API dynamically
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY`;
-    script.async = true;
-    script.onload = initializeMap;
-    document.body.appendChild(script);
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?libraries=places`;
+      script.async = true;
+      script.onload = initializeMap;
+      document.body.appendChild(script);
+    } else {
+      initializeMap();
+    }
   }, []);
 
   const initializeMap = () => {
     const defaultLocation = { lat: 19.076, lng: 72.877 }; // Mumbai
-    const newMap = new window.google.maps.Map(document.getElementById("map") as HTMLElement, {
+    const mapElement = document.getElementById("map") as HTMLElement;
+    if (!mapElement) return;
+
+    const newMap = new window.google.maps.Map(mapElement, {
       center: defaultLocation,
       zoom: 12,
     });
@@ -59,7 +65,7 @@ export default function ProviderDashboard() {
       if (res.ok) {
         const newFood = await res.json();
         setFoods([newFood, ...foods]);
-        setExpanded(null); // Close the form after submission
+        setExpanded(null);
       }
     } catch (error) {
       console.error("Submission error:", error);
@@ -82,7 +88,6 @@ export default function ProviderDashboard() {
         </button>
       </header>
 
-      {/* Action Buttons */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <button
           onClick={() => toggleSection("addFood")}
@@ -92,12 +97,10 @@ export default function ProviderDashboard() {
         </button>
       </div>
 
-      {/* Expandable Sections */}
       {expanded === "addFood" && (
         <section className="p-6 bg-white shadow-lg rounded-lg">
           <h3 className="text-xl font-semibold mb-4 text-gray-800">Add Surplus Food</h3>
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
-            {/* Food Name */}
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">Food Name</label>
               <input
@@ -109,7 +112,6 @@ export default function ProviderDashboard() {
               />
             </div>
 
-            {/* Food Selection Dropdown */}
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">Select Food Category</label>
               <select
@@ -126,7 +128,17 @@ export default function ProviderDashboard() {
               </select>
             </div>
 
-            {/* Amount in KG */}
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Upload Food Image</label>
+              <input
+                type="file"
+                name="foodImage"
+                accept="image/*"
+                className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+                required
+              />
+            </div>
+
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">Amount (kg)</label>
               <input
@@ -138,18 +150,6 @@ export default function ProviderDashboard() {
               />
             </div>
 
-            {/* Expiry Time */}
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Expiry Time</label>
-              <input
-                type="datetime-local"
-                name="expiryTime"
-                className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-                required
-              />
-            </div>
-
-            {/* Pickup Location */}
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">Pickup Location</label>
               <input
@@ -161,26 +161,11 @@ export default function ProviderDashboard() {
               />
             </div>
 
-            {/* Google Map Display */}
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">Location Map</label>
               <div id="map" className="w-full h-64 border rounded-lg shadow-md"></div>
             </div>
 
-            {/* Description */}
-            <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Additional Description</label>
-              <textarea
-                name="description"
-                placeholder="Write any important details..."
-                className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none h-24"
-                maxLength={200}
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">Max 200 characters</p>
-            </div>
-
-            {/* Submit Button */}
             <button
               type="submit"
               className="w-full p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
