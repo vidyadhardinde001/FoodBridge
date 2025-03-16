@@ -3,7 +3,7 @@
 import { useState } from "react";
 import React from "react";
 import { motion } from "framer-motion";
-import { FaPhone, FaPaperclip, FaRegSmile, FaArrowRight } from "react-icons/fa";
+import { FaPhone, FaPaperclip, FaRegSmile, FaArrowRight, FaKey } from "react-icons/fa";
 import Image from "next/image";
 
 export default function ChatUI() {
@@ -13,17 +13,23 @@ export default function ChatUI() {
   ]);
   const [input, setInput] = useState("");
 
+  // Function to send a message
   const sendMessage = () => {
     if (!input.trim()) return;
     setMessages([...messages, { text: input, sender: "user" }]);
     setInput("");
   };
 
+  // Function to generate a 6-digit OTP
+  const generateOTP = () => {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a 6-digit OTP
+    setMessages([...messages, { text: `Your OTP is: ${otp}`, sender: "provider" }]);
+  };
+
   return (
-    <div
-      className="flex items-center justify-center min-h-screen bg-cover bg-center bg-gradient-to-br from-gray-900 to-black"
-    >
+    <div className="flex items-center justify-center min-h-screen bg-cover bg-center bg-gradient-to-br from-gray-900 to-black">
       <div className="w-full max-w-[50%] h-screen flex flex-col bg-white/10 backdrop-blur-md p-6 rounded-lg shadow-lg border border-white/20">
+        
         {/* Chat Header */}
         <div className="flex items-center justify-between bg-white/20 p-3 rounded-lg shadow-md border border-white/30">
           <div className="flex items-center space-x-3">
@@ -46,8 +52,9 @@ export default function ChatUI() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className={`p-3 max-w-xs rounded-lg shadow-md text-sm ${msg.sender === "user" ? "bg-yellow-400 text-black self-end" : "bg-gray-700 text-white self-start"
-                }`}
+              className={`p-3 max-w-xs rounded-lg shadow-md text-sm ${
+                msg.sender === "user" ? "bg-yellow-400 text-black self-end" : "bg-gray-700 text-white self-start"
+              }`}
             >
               {msg.text}
             </motion.div>
@@ -73,8 +80,15 @@ export default function ChatUI() {
             <FaArrowRight className="text-white text-lg" />
           </button>
         </div>
-      </div>
 
+        {/* Generate OTP Button */}
+        <button
+          onClick={generateOTP}
+          className="mt-4 flex items-center justify-center bg-blue-500 text-white font-semibold p-3 rounded-lg w-full hover:bg-blue-600 transition-all"
+        >
+          <FaKey className="mr-2" /> Generate OTP
+        </button>
+      </div>
     </div>
   );
 }
