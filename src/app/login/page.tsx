@@ -1,35 +1,104 @@
 "use client";
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import React from "react";
+import { motion } from "framer-motion";
 
-export default function LoginPage() {
+export default function ProviderLogin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role: "provider" }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+        router.push("/dashboard/provider");
+      } else {
+        setError(data.error || "Login failed");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <h1 className="text-3xl font-bold text-green-600 mb-8">FoodBridge Login</h1>
-      <div className="space-y-4">
-        <button
-          onClick={() => router.push('/login/provider')}
-          className="w-64 bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition"
+    <div className="relative w-full h-screen flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: "url('/bg.jpg')" }}>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/60"></div>
+      
+      {/* Login Box */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative z-10 bg-white/20 backdrop-blur-lg shadow-lg rounded-2xl p-10 text-center w-[90%] max-w-md border border-white/30"
+      >
+        <motion.h2
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-3xl font-bold text-white drop-shadow-lg"
         >
-          Login as Provider
-        </button>
-        <button
-          onClick={() => router.push('/login/charity')}
-          className="w-64 bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition"
+          Provider Login
+        </motion.h2>
+
+        <motion.form
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          onSubmit={handleSubmit}
+          className="space-y-4 mt-6"
         >
-          Login as Charity
-        </button>
-      </div>
-      <p className="mt-8">
-        Don't have an account?{' '}
-        <a
-          href="/register"
-          className="text-green-600 hover:underline"
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white"
+            required
+          />
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            type="submit"
+            className="w-full bg-blue-500 text-white p-3 rounded-lg shadow-md hover:shadow-xl transition font-semibold"
+          >
+            Login
+          </motion.button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </motion.form>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="mt-6 text-white/80"
         >
-          Register here
-        </a>
-      </p>
+          Don't have an account? {" "}
+          <Link href="/register/provider" className="text-white font-semibold underline">
+            Register here
+          </Link>
+        </motion.p>
+      </motion.div>
     </div>
   );
 }
