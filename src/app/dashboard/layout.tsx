@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaHome, FaInfoCircle, FaChartBar, FaEnvelope, FaListAlt } from "react-icons/fa";
+import { FaHome, FaInfoCircle, FaChartBar, FaEnvelope, FaListAlt, FaUser } from "react-icons/fa";
 
 export default function DashboardLayout({
   children,
@@ -40,6 +40,9 @@ export default function DashboardLayout({
           </Link>
           <Link href="/contact" className="flex items-center p-3 text-gray-700 hover:bg-gray-200 rounded-lg transition">
             <FaEnvelope className="mr-3" /> Contact
+          </Link>
+          <Link href="/profile" className="flex items-center p-3 text-gray-700 hover:bg-gray-200 rounded-lg transition">
+            <FaUser className="mr-3" /> Profile
           </Link>
         </nav>
       </aside>
