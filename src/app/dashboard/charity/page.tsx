@@ -139,13 +139,16 @@ export default function CharityDashboard() {
                 className="bg-gray-50 p-4 rounded-lg shadow-md border relative"
               >
                 <div className="absolute top-2 right-2 flex items-center gap-2">
-                  <span
-                    className={`px-2 py-1 text-sm font-semibold rounded ${
-                      food.isVeg ? "bg-green-500 text-white" : "bg-red-500 text-white"
-                    }`}
-                  >
-                    {food.isVeg ? "Veg" : "Non-Veg"}
-                  </span>
+                {food.isVeg !== undefined && (
+  <span
+    className={`px-2 py-1 text-sm font-semibold rounded ${
+      food.isVeg ? "bg-green-500 text-white" : "bg-red-500 text-white"
+    }`}
+  >
+    {food.isVeg ? "Veg" : "Non-Veg"}
+  </span>
+)}
+
 
                   <input
                     type="checkbox"
