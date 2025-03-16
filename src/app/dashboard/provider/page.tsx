@@ -99,7 +99,7 @@ export default function ProviderDashboard() {
           Add Surplus Food ➕
         </button>
         {/* Chat Button */}
-        <Link href="/">
+        <Link href="/chat">
           <button
             className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition"
           >
