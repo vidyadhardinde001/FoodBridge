@@ -4,6 +4,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import jwt from  'jsonwebtoken';
+import { sendConfirmationEmail } from '@/lib/email';
+
 
 
 export default function VerifyPage({ params }: { params: { id: string } }) {
@@ -14,14 +17,22 @@ export default function VerifyPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const verifyPickup = async () => {
       const token = searchParams.get('token');
+      if (!token) {
+        setStatus('error');
+        return;
+      }
+
       try {
-        const res = await fetch(`/api/food/${params.id}`, {
-          method: 'PATCH',
+        // Call the API route for verification
+        const res = await fetch('/api/verify', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ status: 'picked_up' })
+          body: JSON.stringify({
+            token,
+            foodId: params.id
+          })
         });
 
         const data = await res.json();
@@ -35,7 +46,6 @@ export default function VerifyPage({ params }: { params: { id: string } }) {
           setStatus('already_picked');
           setTimeout(() => router.push('/dashboard/provider'), 5000);
         } else {
-          const data = await res.json();
           console.error('Verification failed:', data.error);
           setStatus('error');
         }
@@ -46,7 +56,7 @@ export default function VerifyPage({ params }: { params: { id: string } }) {
     };
 
     verifyPickup();
-  }, [params.id, router,searchParams]);
+  }, [params.id, router, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

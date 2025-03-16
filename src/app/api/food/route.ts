@@ -1,4 +1,4 @@
-// food/route.ts
+// api/food/route.ts
 
 import { connectDB, Food, User } from '@/lib/db';
 import { NextResponse } from 'next/server';
@@ -19,16 +19,19 @@ export async function GET() {
 
 export async function POST(req: Request) {
   await connectDB();
-  const { foodName, quantity, pickupLocation, description } = await req.json();
+  const { foodName,foodCategory, quantity, pickupLocation, description, imageUrl } = await req.json();
   const token = req.headers.get('authorization')?.split(' ')[1];
 
   try {
     const decoded: any = jwt.verify(token!, process.env.JWT_SECRET!);
+    
     const food = await Food.create({
       foodName,
+      foodCategory,
       quantity,
       pickupLocation,
       description,
+      imageUrl,
       provider: decoded.id,
       status: 'available'
     });
@@ -46,6 +49,8 @@ export async function PATCH(req: Request) {
 
   try {
     const decoded: any = jwt.verify(token!, process.env.JWT_SECRET!);
+
+    const charityId = decoded.id;
     const food = await Food.findByIdAndUpdate(
       foodId,
       { status: 'pending', charity: decoded.id },
@@ -53,7 +58,7 @@ export async function PATCH(req: Request) {
     ).populate('provider charity');
 
     // Send verification email to provider
-    await sendVerificationEmail(food.provider.email, food._id);
+    await sendVerificationEmail(food.provider.email, food._id,charityId);
 
     return NextResponse.json(food);
   } catch (error) {

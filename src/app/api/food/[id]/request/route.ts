@@ -23,7 +23,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const charityId = decoded.id;
 
     // Find the food listing
-    const food = await Food.findById(params.id).populate('provider');
+    const food = await Food.findById(params.id)
+      .populate('provider', 'email');
     if (!food) {
       return NextResponse.json(
         { error: 'Food listing not found' },
@@ -37,7 +38,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     await food.save();
 
     // Send verification email to the provider
-    await sendVerificationEmail(food.provider.email, food._id, food.provider._id.toString());
+    await sendVerificationEmail(
+      (food.provider as any).email, // Provider's email
+      food._id.toString(),
+      charityId
+    );
 
     return NextResponse.json(food);
   } catch (error) {

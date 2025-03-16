@@ -33,7 +33,9 @@ export const User = mongoose.models.User || mongoose.model<UserDocument>('User',
 // Add to existing User schema
 interface FoodDocument extends mongoose.Document {
   foodName: string;
+  foodCategory: string;
   quantity: string;
+  imageUrl?: string;
   status: 'available' | 'pending' | 'picked_up';
   pickupLocation: string;
   description: string;
@@ -44,12 +46,21 @@ interface FoodDocument extends mongoose.Document {
 
 const FoodSchema = new mongoose.Schema<FoodDocument>({
   foodName: { type: String, required: true },
+  foodCategory: { type: String, required: true },
   quantity: { type: String, required: true },
+  imageUrl: { type: String },
   status: { type: String, enum: ['available', 'pending', 'picked_up'], default: 'available' },
   pickupLocation: { type: String, required: true },
   description: { type: String, required: true },
-  provider: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  charity: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  provider: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', // Correct reference
+    required: true 
+  },
+  charity: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User' // Correct reference
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

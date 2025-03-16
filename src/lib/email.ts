@@ -16,8 +16,8 @@ const transporter = nodemailer.createTransport({
 // console.log("NEXTAUTH_URL:", process.env.NEXTAUTH_URL);
 
 
-export const sendVerificationEmail = async (providerEmail: string, foodId: string, providerId: string) => {
-  const token = jwt.sign({ providerId, foodId }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+export const sendVerificationEmail = async (providerEmail: string, foodId: string, charityId: string) => {
+  const token = jwt.sign({  foodId,charityId  }, process.env.JWT_SECRET!, { expiresIn: '1h' });
   const verificationLink = `${process.env.NEXTAUTH_URL}/verify/${foodId}?token=${token}`;
 
   const mailOptions = {
@@ -33,7 +33,7 @@ export const sendVerificationEmail = async (providerEmail: string, foodId: strin
 // lib/email.ts
 export const sendConfirmationEmail = async (
   charityEmail: string, 
-  foodDetails: { foodName: string }  // Fix parameter type
+  foodDetails: { foodName: string,pickupLocation: string }  // Fix parameter type
 ) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,

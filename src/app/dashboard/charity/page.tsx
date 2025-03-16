@@ -1,3 +1,5 @@
+// dashboard/charity/page.tsx
+
 "use client";
 import { useState, useEffect } from "react";
 
@@ -110,11 +112,7 @@ export default function CharityDashboard() {
                 {/* Food Image */}
                 <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                   {food.imageUrl ? (
-                    <img
-                      src={food.imageUrl}
-                      alt={food.foodName}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={food.imageUrl} alt={food.foodName} className="w-full h-full object-cover" />
                   ) : (
                     <p className="text-gray-400">No Image Available</p>
                   )}
@@ -125,6 +123,9 @@ export default function CharityDashboard() {
                   {" "}
                   {food.quantity}
                 </p>
+
+                <p className="text-gray-600 font-semibold">Category:</p>
+                <p className="text-teal-700">{food.foodCategory}</p>
 
                 <p className="text-gray-600 font-semibold">Provider:</p>
                     <p className="text-gray-600 bg-white">

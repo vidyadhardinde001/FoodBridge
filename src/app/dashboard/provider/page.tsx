@@ -1,3 +1,5 @@
+// dashboard/provider/page.tsx
+
 "use client";
 import { useEffect, useState } from "react";
 
@@ -50,7 +52,16 @@ export default function ProviderDashboard() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const foodData = Object.fromEntries(formData.entries());
+    // const foodData = Object.fromEntries(formData.entries());
+    const foodData = {
+      foodName: formData.get('foodName'),
+      foodCategory: formData.get('foodCategory'),
+      quantity: formData.get('amount'),
+      pickupLocation: formData.get('pickupLocation'),
+      description: 'Food donation', // Add description field to form
+      imageUrl: formData.get('foodImage')?.toString() // Implement image upload logic
+    };
+    console.log(foodData);
 
     try {
       const res = await fetch("/api/food", {

@@ -23,13 +23,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const { providerId, foodId } = decoded;
     console.log('Decoded token:', decoded);
 
-    if (foodId !== params.id) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 403 });
-    }
+    // if (foodId !== params.id) {
+    //   return NextResponse.json({ error: 'Invalid token' }, { status: 403 });
+    // }
 
     // Find the food listing
-    const food = await Food.findById(params.id).populate('charity').populate('provider', 'email');
-    if (!food?.charity) {
+    const food = await Food.findByIdAndUpdate(
+      params.id,
+      { status: 'picked_up' },
+      { new: true }
+    )
+    .populate('charity', 'email')
+    .populate('provider', 'email');
+
+    if (!food) {
+      return NextResponse.json({ error: 'Food not found' }, { status: 404 });
+    }
+
+    if (!food.charity) {
       return NextResponse.json(
         { error: 'Charity not found for this food listing' },
         { status: 404 }
@@ -48,12 +59,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     await food.save();
 
     // Send confirmation to charity (add this)
-    if (food.charity && (food.charity as any).email) {
-      await sendConfirmationEmail(
-        (food.charity as any).email, 
-        { foodName: food.foodName }
-      );
-    }
+    await sendConfirmationEmail(
+      (food.charity as any).email,
+      {
+        foodName: food.foodName,
+        pickupLocation: food.pickupLocation
+      }
+    );
 
     return NextResponse.json(food);
   } catch (error) {
