@@ -1,12 +1,13 @@
-// dashboard/charity/page.tsx
-
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function CharityDashboard() {
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState([]);
   const [expandedFood, setExpandedFood] = useState<string | null>(null);
+  const [selectedFoods, setSelectedFoods] = useState<string[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchFoods = async () => {
@@ -22,30 +23,24 @@ export default function CharityDashboard() {
     fetchFoods();
   }, []);
 
-  const handleRequest = async (foodId: string) => {
-    try {
-      const res = await fetch(`/api/food/${foodId}/request`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-
-      if (res.ok) {
-        const updatedFood = await res.json();
-        setFoods(foods.map((f) => (f._id === foodId ? updatedFood : f)));
-      } else {
-        const data = await res.json();
-        console.error("Request failed:", data.error);
-      }
-    } catch (error) {
-      console.error("Request failed:", error);
-    }
+  // Handle selection toggle
+  const toggleSelection = (foodId: string) => {
+    setSelectedFoods((prevSelected) =>
+      prevSelected.includes(foodId)
+        ? prevSelected.filter((id) => id !== foodId)
+        : [...prevSelected, foodId]
+    );
   };
 
+  // Navigate to Cart Page
+  const goToCart = () => {
+    const selectedFoodData = foods.filter((food) => selectedFoods.includes(food._id));
+    localStorage.setItem("cartItems", JSON.stringify(selectedFoodData));
+    router.push("/cart"); // Redirect to /cart instead of /dashboard/cart
+  };
+  
   return (
     <div className="w-full mx-auto p-6 bg-gray-100 min-h-screen">
-      {/* Header */}
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Charity Dashboard</h1>
         <button
@@ -60,7 +55,6 @@ export default function CharityDashboard() {
         </button>
       </header>
 
-      {/* Search Bar */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
         <input
           type="text"
@@ -71,7 +65,6 @@ export default function CharityDashboard() {
         />
       </div>
 
-      {/* Food Cards Grid */}
       <div className="bg-white p-4 rounded-lg shadow-md">
         <h2 className="text-lg font-semibold mb-2">Available Food</h2>
         <div className="border-t my-2"></div>
@@ -87,29 +80,25 @@ export default function CharityDashboard() {
                 key={food._id}
                 className="bg-gray-50 p-4 rounded-lg shadow-md border relative"
               >
-                {/* Veg/Non-Veg Badge */}
                 <div className="absolute top-2 right-2 flex items-center gap-2">
-                  
-
-                  {/* Veg/Non-Veg Badge */}
                   <span
                     className={`px-2 py-1 text-sm font-semibold rounded ${
-                      food.isVeg
-                        ? "bg-green-500 text-white"
-                        : "bg-red-500 text-white"
+                      food.isVeg ? "bg-green-500 text-white" : "bg-red-500 text-white"
                     }`}
                   >
                     {food.isVeg ? "Veg" : "Non-Veg"}
                   </span>
 
-                  {/* Checkbox */}
-                  <input type="checkbox" className="w-5 h-5 accent-teal-600" />
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 accent-teal-600"
+                    checked={selectedFoods.includes(food._id)}
+                    onChange={() => toggleSelection(food._id)}
+                  />
                 </div>
 
-                {/* Food Name */}
                 <h3 className="text-lg font-semibold">{food.foodName}</h3>
 
-                {/* Food Image */}
                 <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                   {food.imageUrl ? (
                     <img src={food.imageUrl} alt={food.foodName} className="w-full h-full object-cover" />
@@ -119,60 +108,50 @@ export default function CharityDashboard() {
                 </div>
 
                 <p className="text-gray-600 font-semibold">Quantity:</p>
-                <p className="text-green-600 text-2xl font-bold">
-                  {" "}
-                  {food.quantity}
-                </p>
+                <p className="text-green-600 text-2xl font-bold">{food.quantity}</p>
 
                 <p className="text-gray-600 font-semibold">Category:</p>
                 <p className="text-teal-700">{food.foodCategory}</p>
 
                 <p className="text-gray-600 font-semibold">Provider:</p>
-                    <p className="text-gray-600 bg-white">
-                      {food.providerName}
-                    </p>
+                <p className="text-gray-600 bg-white">{food.providerName}</p>
 
-                {/* View More Button */}
                 <button
-                  onClick={() =>
-                    setExpandedFood(expandedFood === food._id ? null : food._id)
-                  }
-                  className="mt-3 flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-300 ease-in-out"
+                  onClick={() => setExpandedFood(expandedFood === food._id ? null : food._id)}
+                  className="mt-3 w-full px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-blue-600 hover:text-white transition"
                 >
                   {expandedFood === food._id ? "View Less" : "View More"}
                 </button>
 
-                {/* Expanded Details */}
                 {expandedFood === food._id && (
                   <div className="mt-2 border-t pt-2">
-                    
-                    <p className="text-gray-600 font-semibold">
-                      Food description:{" "}
-                    </p>
+                    <p className="text-gray-600 font-semibold">Food description:</p>
                     <p className="text-teal-700 bg-white">{food.description}</p>
 
-                    {/* Location */}
-                <p className="text-gray-600 font-semibold mt-2">Location:</p>
-                <p className="text-teal-700 mt-2">{food.pickupLocation}</p>
+                    <p className="text-gray-600 font-semibold mt-2">Location:</p>
+                    <p className="text-teal-700 mt-2">{food.pickupLocation}</p>
 
-                    {/* Map Placeholder */}
                     <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center mt-2">
                       <p className="text-gray-400">Map Placeholder</p>
                     </div>
-
-                    {/* Contact Button */}
-                    <button
-                      onClick={() => handleRequest(food._id)}
-                      className="mt-4 bg-teal-700 text-white px-4 py-2 rounded-lg w-full hover:bg-teal-800 transition"
-                    >
-                      Contact
-                    </button>
                   </div>
                 )}
               </div>
             ))}
         </div>
       </div>
+
+      {/* Add to Cart Button */}
+      {selectedFoods.length > 0 && (
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={goToCart}
+            className="px-6 py-3 bg-teal-700 text-white text-lg font-semibold rounded-lg shadow-md hover:bg-teal-800 transition"
+          >
+            Add to Cart ({selectedFoods.length})
+          </button>
+        </div>
+      )}
     </div>
   );
 }
