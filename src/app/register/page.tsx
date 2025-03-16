@@ -72,5 +72,4 @@ export default function RegisterPage() {
         </motion.p>
       </motion.div>
     </div>
-  );
-}
+  )}
