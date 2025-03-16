@@ -2,6 +2,9 @@
 
 "use client";
 import { useEffect, useState } from "react";
+import React from "react";
+import { MessageCircle } from "lucide-react"; // Import Lucide icon
+import Link from "next/link"; // If using Next.js
 
 declare global {
   interface Window {
@@ -106,7 +109,18 @@ export default function ProviderDashboard() {
         >
           Add Surplus Food ➕
         </button>
+        {/* Chat Button */}
+        <Link href="/chat">
+          <button
+            className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition"
+          >
+            <MessageCircle className="w-6 h-6 text-blue-600" />
+            Messages
+          </button>
+        </Link>
       </div>
+
+
 
       {expanded === "addFood" && (
         <section className="p-6 bg-white shadow-lg rounded-lg">
