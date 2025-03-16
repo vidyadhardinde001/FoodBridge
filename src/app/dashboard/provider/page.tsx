@@ -9,14 +9,14 @@ declare global {
 
 export default function ProviderDashboard() {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [foods, setFoods] = useState([]);
+  const [foods, setFoods] = useState<any[]>([]);
   const [map, setMap] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
 
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
       script.async = true;
       script.onload = initializeMap;
       document.body.appendChild(script);
@@ -28,7 +28,7 @@ export default function ProviderDashboard() {
   const initializeMap = () => {
     const defaultLocation = { lat: 19.076, lng: 72.877 }; // Mumbai
     const mapElement = document.getElementById("map") as HTMLElement;
-    if (!mapElement) return;
+    if (!mapElement || map) return;
 
     const newMap = new window.google.maps.Map(mapElement, {
       center: defaultLocation,
@@ -50,9 +50,30 @@ export default function ProviderDashboard() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const foodData = Object.fromEntries(formData.entries());
+    const file = formData.get("foodImage") as File;
+
+    if (!file || file.size === 0) {
+      alert("Please upload a food image.");
+      return;
+    }
 
     try {
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData, // Upload image first
+      });
+
+      if (!uploadRes.ok) throw new Error("Image upload failed.");
+      const { imageUrl } = await uploadRes.json();
+
+      const foodData = {
+        foodName: formData.get("foodName"),
+        foodCategory: formData.get("foodCategory"),
+        amount: formData.get("amount"),
+        pickupLocation: formData.get("pickupLocation"),
+        foodImage: imageUrl, // Store the uploaded image URL
+      };
+
       const res = await fetch("/api/food", {
         method: "POST",
         headers: {
@@ -66,6 +87,8 @@ export default function ProviderDashboard() {
         const newFood = await res.json();
         setFoods([newFood, ...foods]);
         setExpanded(null);
+      } else {
+        console.error("Failed to submit food data.");
       }
     } catch (error) {
       console.error("Submission error:", error);
