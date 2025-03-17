@@ -49,22 +49,23 @@ export default function ProviderDashboard() {
 
     const fetchChats = async () => {
       const res = await fetch("/api/chat", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}`,
-        "X-User-Role": "provider"
-       }
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "X-User-Role": "provider"
+        }
       });
       const data = await res.json();
       setChats(data);
     };
-    
+
     fetchChats();
 
     // Listen for new messages
     socket?.on("new-message", (message) => {
-      setChats(prevChats => prevChats.map(chat => 
-        chat._id === message.chatId ? 
-        { ...chat, messages: [...chat.messages, message] } : 
-        chat
+      setChats(prevChats => prevChats.map(chat =>
+        chat._id === message.chatId ?
+          { ...chat, messages: [...chat.messages, message] } :
+          chat
       ));
     });
 
@@ -204,17 +205,17 @@ export default function ProviderDashboard() {
             </div>
 
             <div>
-  <label className="block text-gray-700 text-sm font-bold mb-2">Food Type</label>
-  <select
-    name="foodType"
-    className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
-    required
-  >
-    <option value="">Select type...</option>
-    <option value="Vegetarian">Vegetarian</option>
-    <option value="Non-Vegetarian">Non-Vegetarian</option>
-  </select>
-</div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Food Type</label>
+              <select
+                name="foodType"
+                className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+                required
+              >
+                <option value="">Select type...</option>
+                <option value="Vegetarian">Vegetarian</option>
+                <option value="Non-Vegetarian">Non-Vegetarian</option>
+              </select>
+            </div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">Upload Food Image</label>
               <input

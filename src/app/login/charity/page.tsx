@@ -38,7 +38,7 @@ export default function CharityLogin() {
     <div className="relative w-full h-screen flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: "url('/bg.jpg')" }}>
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/60"></div>
-      
+
       {/* Login Box */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -94,11 +94,12 @@ export default function CharityLogin() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="mt-6 text-white/80"
         >
-          Don't have an account? {" "}
+          Don&apos;t have an account?{" "}
           <Link href="/register/charity" className="text-white font-semibold underline">
             Register here
           </Link>
         </motion.p>
+
       </motion.div>
     </div>
   );

@@ -61,7 +61,8 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "tesseract.js": "^6.0.0",
-    "three": "^0.167.1"
+    "three": "^0.167.1",
+    "tsx": "^4.19.3"
   },
   "devDependencies": {
     "@svgr/webpack": "^8.1.0",

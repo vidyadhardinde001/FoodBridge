@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import React from "react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,10 +65,10 @@ export default function LoginPage() {
           transition={{ duration: 0.8, delay: 0.6 }}
           className="mt-6 text-white/80"
         >
-          Don't have an account?{" "}
-          <a href="/register" className="text-white font-semibold underline">
+          Don&apos;t have an account?{" "}
+          <Link href="/register/charity" className="text-white font-semibold underline">
             Register here
-          </a>
+          </Link>
         </motion.p>
       </motion.div>
     </div>

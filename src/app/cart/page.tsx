@@ -1,17 +1,38 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+
+interface CartItem {
+  _id: string;
+  foodName: string;
+  imageUrl?: string;
+  quantity: number;
+  foodCategory: string;
+  description?: string;
+  pickupLocation: string;
+  providerName: string;
+  contact?: string;
+}
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    const storedItems = localStorage.getItem("cartItems");
-    if (storedItems) {
-      setCartItems(JSON.parse(storedItems));
+    if (typeof window !== "undefined") {
+      const storedItems = localStorage.getItem("cartItems");
+      if (storedItems) {
+        setCartItems(JSON.parse(storedItems));
+      }
     }
   }, []);
+
+  const removeItem = (id: string) => {
+    const updatedCart = cartItems.filter((item) => item._id !== id);
+    setCartItems(updatedCart);
+    localStorage.setItem("cartItems", JSON.stringify(updatedCart));
+  };
 
   return (
     <div className="w-full mx-auto p-6 bg-gray-100 min-h-screen">
@@ -29,7 +50,13 @@ export default function CartPage() {
               {/* Image */}
               <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center mt-2">
                 {food.imageUrl ? (
-                  <img src={food.imageUrl} alt={food.foodName} className="w-full h-full object-cover" />
+                  <Image
+                    src={food.imageUrl}
+                    alt={food.foodName}
+                    width={300} // Adjust width
+                    height={200} // Adjust height
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <p className="text-gray-400">No Image Available</p>
                 )}
@@ -47,11 +74,7 @@ export default function CartPage() {
 
               {/* Remove Item Button */}
               <button
-                onClick={() => {
-                  const updatedCart = cartItems.filter((item) => item._id !== food._id);
-                  setCartItems(updatedCart);
-                  localStorage.setItem("cartItems", JSON.stringify(updatedCart));
-                }}
+                onClick={() => removeItem(food._id)}
                 className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg w-full hover:bg-red-700 transition"
               >
                 Remove Item

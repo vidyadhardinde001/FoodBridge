@@ -1,14 +1,16 @@
-// api/auth/route.ts
-
 import { NextResponse } from "next/server";
 import { registerUser, loginUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        console.log("Received Request Body:", body); // ✅ Debugging Line
+        console.log("📩 Received Request Body:", body);
 
         const { action, username, email, password, healthIssues, allergies } = body;
+
+        if (!action) {
+            return NextResponse.json({ error: "Action is required" }, { status: 400 });
+        }
 
         if (action === "register") {
             if (!username || !email || !password) {
@@ -20,39 +22,52 @@ export async function POST(req: Request) {
 
             try {
                 const user = await registerUser(
-                    username, 
-                    email, 
-                    password, 
+                    username,
+                    email,
+                    password,
                     healthIssues || [],
                     allergies || []
                 );
-                
-                if ("error" in user) {
-                    throw new Error(user.error); // ❌ Instead of returning an object, throw an error
+
+                if (user && typeof user === "object" && "error" in user) {
+                    throw new Error(String(user.error)); // ✅ Ensure it's a string
                 }
-        
-                return NextResponse.json({ message: "User registered", user });
-            } catch (error: any) {
-                return NextResponse.json({ error: error.message }, { status: 400 }); // ✅ Correctly return 400
+
+                console.log("✅ User Registered:", user);
+                return NextResponse.json({ message: "User registered successfully", user });
+            } catch (error) {
+                console.error("❌ Registration Error:", error);
+                return NextResponse.json(
+                    { error: error instanceof Error ? error.message : "Failed to register user" },
+                    { status: 400 }
+                );
             }
-        } else if (action === "login") {
-            console.log("Login Attempt:", email, password);
-            
+        } 
+        
+        if (action === "login") {
+            if (!email || !password) {
+                return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+            }
+
             try {
                 const token = await loginUser(email, password);
-                console.log("Login Token:", token);
-        
+                console.log("🔑 Login Successful - Token:", token);
                 return NextResponse.json({ token });
             } catch (error) {
-                return NextResponse.json({ error: error.message }, { status: 401 }); // Correctly return 401
+                console.error("❌ Login Error:", error);
+                return NextResponse.json(
+                    { error: error instanceof Error ? error.message : "Invalid credentials" },
+                    { status: 401 }
+                );
             }
-        } else {
-            return NextResponse.json({ error: "Invalid action" }, { status: 400 });
         }
-    } catch (error: any) {
-        console.error("POST /api/auth Error:", error);
+
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+
+    } catch (error) {
+        console.error("❌ Unexpected Server Error:", error);
         return NextResponse.json(
-            { error: error.message || "Internal server error" },
+            { error: error instanceof Error ? error.message : "Internal server error" },
             { status: 500 }
         );
     }
