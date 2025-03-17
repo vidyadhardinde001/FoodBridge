@@ -1,11 +1,8 @@
-// /chat/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-const MessageCircle = (await import("lucide-react")).MessageCircle;
 import Image from "next/image";
 
 interface ChatContact {
@@ -17,23 +14,37 @@ interface ChatContact {
 
 export default function ChatList() {
   const [chats, setChats] = useState<ChatContact[]>([]);
+  const [MessageCircle, setMessageCircle] = useState<any>(null); // State for dynamic icon
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
 
+  // Dynamically import the MessageCircle icon
+  useEffect(() => {
+    const loadIcon = async () => {
+      const { MessageCircle } = await import("lucide-react");
+      setMessageCircle(() => MessageCircle);
+    };
+    loadIcon();
+  }, []);
+
+  // Fetch chats
   useEffect(() => {
     const fetchChats = async () => {
-      const token = localStorage.getItem("token");
-      const role = localStorage.getItem("role");
-      setUserRole(role);
+      // Ensure localStorage is accessed only on the client side
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
+        setUserRole(role);
 
-      try {
-        const res = await fetch("/api/chat", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setChats(data);
-      } catch (error) {
-        console.error("Failed to fetch chats:", error);
+        try {
+          const res = await fetch("/api/chat", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          setChats(data);
+        } catch (error) {
+          console.error("Failed to fetch chats:", error);
+        }
       }
     };
 
@@ -58,9 +69,11 @@ export default function ChatList() {
                   onClick={() => router.push(`/chat/${chat._id}`)}
                 >
                   <Image
-                    src={userRole === 'provider' ? 
-                      chat.charityId.profileImage || '/default-avatar.png' : 
-                      chat.providerId.profileImage || '/default-avatar.png'}
+                    src={
+                      userRole === "provider"
+                        ? chat.charityId.profileImage || "/default-avatar.png"
+                        : chat.providerId.profileImage || "/default-avatar.png"
+                    }
                     alt="Profile"
                     width={48}
                     height={48}
@@ -68,15 +81,17 @@ export default function ChatList() {
                   />
                   <div className="flex-1">
                     <h3 className="text-lg font-medium text-white">
-                      {userRole === 'provider' ? 
-                        chat.charityId.name : 
-                        chat.providerId.name}
+                      {userRole === "provider"
+                        ? chat.charityId.name
+                        : chat.providerId.name}
                     </h3>
                     <p className="text-gray-400 text-sm">
                       {chat.messages[chat.messages.length - 1]?.text || "New chat"}
                     </p>
                   </div>
-                  <MessageCircle className="text-blue-400 w-6 h-6" />
+                  {MessageCircle && (
+                    <MessageCircle className="text-blue-400 w-6 h-6" />
+                  )}
                 </li>
               ))}
             </ul>
