@@ -1,3 +1,5 @@
+// api/auth/login/route.ts
+
 import { connectDB, User } from '@/lib/db';
 import { comparePassword, generateToken } from '@/lib/auth';
 import { NextResponse } from 'next/server';
@@ -6,6 +8,7 @@ export async function POST(req: Request) {
   await connectDB();
 
   const { email, password, role } = await req.json();
+  console.log("role: ", role);
 
   try {
     // Find the user by email
@@ -30,7 +33,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       token,
       role: user.role,
-      ...(user.role === 'charity' && { organizationName: user.organizationName })
+      userId: user._id,
+      ...(user.role === "charity" && { organizationName: user.organizationName }),
     });
   } catch (error) {
     return NextResponse.json(

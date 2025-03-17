@@ -1,12 +1,15 @@
 // lib/db.ts
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 
 import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI!;
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
 
-if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
-}
+// if (!MONGODB_URI) {
+//   throw node test.jsnew Error('Please define the MONGODB_URI environment variable');
+// }
 
 interface UserDocument extends mongoose.Document {
   name: string;
@@ -66,10 +69,48 @@ const FoodSchema = new mongoose.Schema<FoodDocument>({
 
 export const Food = mongoose.models.Food || mongoose.model<FoodDocument>('Food', FoodSchema);
 
+// Add to existing schemas
+interface ChatDocument extends mongoose.Document {
+  foodId: mongoose.Types.ObjectId;
+  charityId: mongoose.Types.ObjectId;
+  providerId: mongoose.Types.ObjectId;
+  messages: MessageDocument[];
+  status: 'pending' | 'confirmed' | 'completed';
+}
+
+interface MessageDocument extends mongoose.Document {
+  sender: 'charity' | 'provider';
+  text: string;
+  timestamp: Date;
+}
+
+const MessageSchema = new mongoose.Schema<MessageDocument>({
+  sender: { type: String, enum: ['charity', 'provider'], required: true },
+  text: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now }
+});
+
+const ChatSchema = new mongoose.Schema<ChatDocument>({
+  foodId: { type: mongoose.Schema.Types.ObjectId, ref: 'Food', required: true },
+  charityId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  messages: [MessageSchema],
+  status: { type: String, enum: ['pending', 'confirmed', 'completed'], default: 'pending' }
+});
+
+export const Chat = mongoose.models.Chat || mongoose.model<ChatDocument>('Chat', ChatSchema);
+
 export const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000, // 30 seconds timeout
+      socketTimeoutMS: 45000, 
+      maxPoolSize: 10,
+      retryWrites: true,
+      w: 'majority'
+    });
     console.log('MongoDB connected');
+    await Chat.collection.createIndex({ providerId: 1, charityId: 1, updatedAt: -1 });
   } catch (error) {
     console.error('MongoDB connection error:', error);
     process.exit(1);

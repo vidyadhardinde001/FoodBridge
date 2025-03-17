@@ -1,3 +1,5 @@
+// src/sections/ChatList.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -5,26 +7,53 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import React from "react";
+import Image from "next/image";
+import { getSocket } from "@/lib/socket-client";
+
+
+const defaultAvatar = "/default-avatar.png";
 
 interface Contact {
   id: string;
   name: string;
   profileImage: string;
+  lastMessage?: string;
 }
 
 export default function ChatList() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const router = useRouter();
+  const [chats, setChats] = useState([]);
+  const socket = getSocket();
 
   useEffect(() => {
-    // Simulated list of people who contacted the provider
-    const dummyContacts: Contact[] = [
-      { id: "1", name: "John Doe", profileImage: "/john.png" },
-      { id: "2", name: "Jane Smith", profileImage: "/jane.png" },
-      { id: "3", name: "Alex Johnson", profileImage: "/alex.png" },
-    ];
-
-    setContacts(dummyContacts);
+    const fetchChats = async () => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+      
+      try {
+        const res = await fetch("/api/chat", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        console.log(data);
+        
+        const mappedContacts = data.map((chat) => ({
+          id: chat._id,
+          name: role === 'provider' ? chat.charityId.name : chat.providerId.name,
+          profileImage: role === 'provider' 
+            ? chat.charityId.profileImage || '/default-avatar.png'
+            : chat.providerId.profileImage || '/default-avatar.png',
+          lastMessage: chat.messages[chat.messages.length - 1]?.text
+        }));
+        
+        setContacts(mappedContacts);
+      } catch (error) {
+        console.error("Failed to fetch chats:", error);
+      }
+    };
+  
+    fetchChats();
   }, []);
 
   return (
@@ -41,13 +70,19 @@ export default function ChatList() {
                 className="flex items-center p-3 border-b last:border-none hover:bg-gray-100 rounded-lg transition cursor-pointer"
                 onClick={() => router.push(`/chat/${contact.id}`)}
               >
-                <img
-                  src={contact.profileImage || "/default-avatar.png"}
+                <Image
+                  src="/default-avatar.png"
                   alt={contact.name}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-full mr-4"
                 />
+
                 <div className="flex-1">
                   <h3 className="text-lg font-medium">{contact.name}</h3>
+                  {contact.lastMessage && (
+                    <p className="...">{contact.lastMessage}</p>
+                  )}
                 </div>
                 <MessageCircle className="text-blue-500 w-6 h-6" />
               </li>

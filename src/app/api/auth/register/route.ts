@@ -1,3 +1,6 @@
+// api/auth/register/route.ts
+
+
 import { connectDB, User } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { NextResponse } from 'next/server';

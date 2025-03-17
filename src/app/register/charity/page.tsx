@@ -39,6 +39,12 @@ export default function CharityRegister() {
 
       if (res.ok) {
         router.push("/login/charity");
+        const data = await res.json();
+      
+      // Save token, role, and userId to localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("userId", data.userId);
       } else {
         const data = await res.json();
         setError(data.error || "Registration failed");

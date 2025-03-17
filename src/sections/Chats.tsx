@@ -1,4 +1,5 @@
-// frontend/app/page.tsx (Interactive FoodBridge Dashboard with Expandable Sections)
+// src/sections/Chats.tsx
+
 "use client"; // Ensure it's a client component
 
 import { useState, useEffect } from "react";

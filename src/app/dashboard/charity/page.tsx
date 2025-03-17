@@ -1,12 +1,17 @@
 // dashboard/charity/page.tsx
 
 "use client";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { getSocket } from "@/lib/socket-client";
+import { connectSocket } from "@/lib/socket-client";
 
 export default function CharityDashboard() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState([]);
   const [expandedFood, setExpandedFood] = useState<string | null>(null);
+  const socket = getSocket();
 
   useEffect(() => {
     const fetchFoods = async () => {
@@ -20,21 +25,36 @@ export default function CharityDashboard() {
       }
     };
     fetchFoods();
+    // Listen for food status updates
+    socket?.on("food-status-updated", (updatedFood) => {
+      setFoods(prev => prev.filter(f => f._id !== updatedFood._id));
+    });
+
+    return () => {
+      socket?.off("food-status-updated");
+    };
   }, []);
 
   const handleRequest = async (foodId: string) => {
     try {
       const res = await fetch(`/api/food/${foodId}/request`, {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        body: JSON.stringify({
+          charityId: localStorage.getItem("userId") // Add charity ID
+        })
       });
-
+      
       if (res.ok) {
-        const updatedFood = await res.json();
-        setFoods(foods.map((f) => (f._id === foodId ? updatedFood : f)));
-      } else {
+        const { chatId } = await res.json();
+        // router.push(`/chat/${chatId}`);
+
+         // Connect to socket immediately
+      const socket = connectSocket(localStorage.getItem("token")!);
+      socket.emit("join-chat", chatId);
+      router.push(`/chat/${chatId}`);
+      }
+      else {
         const data = await res.json();
         console.error("Request failed:", data.error);
       }

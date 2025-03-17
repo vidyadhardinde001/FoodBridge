@@ -24,6 +24,7 @@ export default function ProviderLogin() {
       if (res.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role);
+        localStorage.setItem("userId", data.userId);
         router.push("/dashboard/provider");
       } else {
         setError(data.error || "Login failed");

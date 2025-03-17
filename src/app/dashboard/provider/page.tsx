@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import React from "react";
 import { MessageCircle } from "lucide-react"; // Import Lucide icon
 import Link from "next/link"; // If using Next.js
+import { getSocket } from "@/lib/socket-client";
+import FoodList from "@/sections/FoodList";
 
 declare global {
   interface Window {
@@ -13,10 +15,13 @@ declare global {
 }
 
 export default function ProviderDashboard() {
+  const socket = getSocket();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [foods, setFoods] = useState([]);
   const [map, setMap] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
+  const [chats, setChats] = useState([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (!window.google) {
@@ -28,6 +33,50 @@ export default function ProviderDashboard() {
     } else {
       initializeMap();
     }
+
+    const fetchFoods = async () => {
+      try {
+        const res = await fetch("/api/food?provider=true", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        const data = await res.json();
+        setFoods(data);
+      } catch (error) {
+        console.error("Error fetching foods:", error);
+      }
+    };
+    fetchFoods();
+
+    const fetchChats = async () => {
+      const res = await fetch("/api/chat", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}`,
+        "X-User-Role": "provider"
+       }
+      });
+      const data = await res.json();
+      setChats(data);
+    };
+    
+    fetchChats();
+
+    // Listen for new messages
+    socket?.on("new-message", (message) => {
+      setChats(prevChats => prevChats.map(chat => 
+        chat._id === message.chatId ? 
+        { ...chat, messages: [...chat.messages, message] } : 
+        chat
+      ));
+    });
+
+    // Listen for new food listings
+    socket?.on("new-food-added", (newFood) => {
+      setFoods(prev => [newFood, ...prev]);
+    });
+
+    return () => {
+      socket?.off("new-food-added");
+      socket?.off("new-message");
+    };
   }, []);
 
   const initializeMap = () => {

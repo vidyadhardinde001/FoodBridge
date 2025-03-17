@@ -1,22 +1,82 @@
+// src/sections/ChatBox.tsx
+
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { connectSocket, getSocket } from "@/lib/socket-client";
 import React from "react";
 import { motion } from "framer-motion";
-import { FaPhone, FaPaperclip, FaRegSmile, FaArrowRight } from "react-icons/fa";
+import { FaPhone, FaPaperclip, FaRegSmile, FaArrowRight, FaCheckCircle } from "react-icons/fa";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 
 export default function ChatUI() {
-  const [messages, setMessages] = useState([
-    { text: "Hello! How can I assist you?", sender: "provider" },
-    { text: "I need help with food donation.", sender: "user" },
-  ]);
+  // const [messages, setMessages] = useState([
+  //   { text: "Hello! How can I assist you?", sender: "provider" },
+  //   { text: "I need help with food donation.", sender: "user" },
+  // ]);
+  const { chatId } = useParams();
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [chatStatus, setChatStatus] = useState('pending');
+  const socket = getSocket();
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const loadChat = async () => {
+      const res = await fetch(`/api/chat/${chatId}`);
+      const data = await res.json();
+      setMessages(data.messages);
+    };
+    
+    loadChat();
+
+    socket?.emit("join-chat", chatId);
+    socket?.on("new-message", (message) => {
+      setMessages(prev => [...prev, message]);
+      scrollToBottom();
+    });
+
+    return () => {
+      socket?.off("new-message");
+      socket?.emit("leave-chat", chatId);
+    };
+  }, [chatId]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
 
   const sendMessage = () => {
     if (!input.trim()) return;
-    setMessages([...messages, { text: input, sender: "user" }]);
+    
+    const role = localStorage.getItem("role");
+    if (!role) return;
+  
+    socket?.emit("send-message", {
+      chatId,
+      text: input,
+      sender: role // Should be 'charity' or 'provider'
+    });
+  
     setInput("");
+  };
+
+  const confirmPickup = async () => {
+    try {
+      const res = await fetch(`/api/chat/${chatId}/confirm`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      });
+      
+      if (res.ok) {
+        setChatStatus("confirmed");
+        socket?.emit("food-status-update", { chatId, status: "confirmed" });
+      }
+    } catch (error) {
+      console.error("Confirmation failed:", error);
+    }
   };
 
   return (
@@ -25,7 +85,7 @@ export default function ChatUI() {
       <div className="flex items-center justify-between bg-gray-700 p-4 rounded-lg shadow-md">
         <div className="flex items-center space-x-3">
           <Image
-            src="/provider-avatar.png" // Replace with actual image
+            src="/default-avatar.png" // Replace with actual image
             alt="Provider Avatar"
             width={40}
             height={40}
@@ -43,19 +103,20 @@ export default function ChatUI() {
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className={`p-3 max-w-xs rounded-lg shadow-md text-sm ${
-    msg.sender === "user" ? "bg-yellow-400 text-black self-end" : "bg-gray-700 text-white self-start"
-  }`}
-          >
-            {msg.text}
-          </motion.div>
-        ))}
+      {messages.map((msg, index) => (
+        <motion.div
+          key={index}
+          className={`... ${msg.sender === 'charity' ? 'bg-blue-500' : 'bg-gray-700'}`}
+        >
+          <div className="text-xs text-gray-300">
+            {msg.sender === 'charity' ? 
+              'Charity User' : 
+              'Provider User'}
+          </div>
+          {msg.text}
+        </motion.div>
+      ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Chat Input */}
@@ -80,6 +141,25 @@ export default function ChatUI() {
           <FaArrowRight className="text-white text-lg" />
         </button>
       </div>
+
+      {chatStatus === 'pending' && (
+        <button 
+          onClick={confirmRequest}
+          className="bg-green-500 p-2 rounded-lg text-white"
+        >
+          Confirm Request
+        </button>
+      )}
+
+{localStorage.getItem("role") === "provider" && foodStatus === "pending" && (
+        <button 
+          onClick={confirmPickup}
+          className="mt-4 p-2 bg-green-500 text-white rounded-lg flex items-center gap-2 justify-center"
+        >
+          <FaCheckCircle />
+          Confirm Pickup
+        </button>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Profile from "@/app/profile/page";
 import { FaUserCircle } from "react-icons/fa";
+import { connectSocket } from "@/lib/socket-client";
 
 const Navbar = () => {
   const router = useRouter();

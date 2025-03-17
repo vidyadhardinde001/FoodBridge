@@ -1,3 +1,5 @@
+// dashboard/layout.tsx
+
 "use client";
 import { useEffect } from "react";
 import React from "react";
@@ -15,9 +17,17 @@ export default function DashboardLayout({
   useEffect(() => {
     const token = localStorage.getItem("token");
     const role = localStorage.getItem("role");
+    const path = window.location.pathname;
     if (!token || !role) {
       router.push("/login");
     }
+
+    if (path.startsWith("/dashboard/provider") && role !== "provider") {
+      router.push("/dashboard/charity");
+    }
+    if (path.startsWith("/dashboard/charity") && role !== "charity") {
+      router.push("/dashboard/provider");
+      }
   }, [router]);
 
   return (

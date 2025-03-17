@@ -37,6 +37,12 @@ export default function ProviderRegister() {
 
       if (res.ok) {
         router.push("/login/provider");
+        const data = await response.json();
+      
+      // Save token, role, and userId to localStorage
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("userId", data.userId);
       } else {
         const data = await res.json();
         setError(data.error || "Registration failed");

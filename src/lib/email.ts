@@ -30,7 +30,6 @@ export const sendVerificationEmail = async (providerEmail: string, foodId: strin
   await transporter.sendMail(mailOptions);
 };
 
-// lib/email.ts
 export const sendConfirmationEmail = async (
   charityEmail: string, 
   foodDetails: { foodName: string,pickupLocation: string }  // Fix parameter type

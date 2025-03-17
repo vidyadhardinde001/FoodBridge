@@ -1,27 +1,43 @@
+// /chat/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import React from "react";
 import { MessageCircle } from "lucide-react";
+import Image from "next/image";
 
-interface Contact {
-  id: string;
-  name: string;
-  profileImage: string;
+interface ChatContact {
+  _id: string;
+  charityId: { name: string; profileImage?: string };
+  providerId: { name: string; profileImage?: string };
+  messages: any[];
 }
 
 export default function ChatList() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [chats, setChats] = useState<ChatContact[]>([]);
   const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Dummy Contacts for Now
   useEffect(() => {
-    setContacts([
-      { id: "1", name: "John Doe", profileImage: "/default-avatar.png" },
-      { id: "2", name: "Jane Smith", profileImage: "/default-avatar.png" },
-    ]);
+    const fetchChats = async () => {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("role");
+      setUserRole(role);
+
+      try {
+        const res = await fetch("/api/chat", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setChats(data);
+      } catch (error) {
+        console.error("Failed to fetch chats:", error);
+      }
+    };
+
+    fetchChats();
   }, []);
 
   return (
@@ -31,25 +47,34 @@ export default function ChatList() {
           Messages
         </h1>
         <div className="bg-black/20 p-4 rounded-xl shadow-lg border border-gray-700">
-          {contacts.length === 0 ? (
+          {chats.length === 0 ? (
             <p className="text-gray-300 text-center">No messages yet.</p>
           ) : (
             <ul>
-              {contacts.map((contact) => (
+              {chats.map((chat) => (
                 <li
-                  key={contact.id}
+                  key={chat._id}
                   className="flex items-center p-4 border-b border-gray-700 last:border-none hover:bg-white/10 rounded-xl transition cursor-pointer"
-                  onClick={() => router.push(`/chat/${contact.id}`)}
+                  onClick={() => router.push(`/chat/${chat._id}`)}
                 >
-                  <img
-                    src={contact.profileImage}
-                    alt={contact.name}
+                  <Image
+                    src={userRole === 'provider' ? 
+                      chat.charityId.profileImage || '/default-avatar.png' : 
+                      chat.providerId.profileImage || '/default-avatar.png'}
+                    alt="Profile"
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full border border-white shadow-md mr-4"
                   />
                   <div className="flex-1">
                     <h3 className="text-lg font-medium text-white">
-                      {contact.name}
+                      {userRole === 'provider' ? 
+                        chat.charityId.name : 
+                        chat.providerId.name}
                     </h3>
+                    <p className="text-gray-400 text-sm">
+                      {chat.messages[chat.messages.length - 1]?.text || "New chat"}
+                    </p>
                   </div>
                   <MessageCircle className="text-blue-400 w-6 h-6" />
                 </li>
@@ -58,8 +83,7 @@ export default function ChatList() {
           )}
         </div>
 
-        {/* Back Button */}
-        <Link href="/dashboard/provider">
+        <Link href="/dashboard">
           <button className="mt-6 w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition shadow-md">
             Back to Dashboard
           </button>
