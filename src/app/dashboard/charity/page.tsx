@@ -132,7 +132,15 @@ export default function CharityDashboard() {
                 {/* Food Image */}
                 <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                   {food.imageUrl ? (
-                    <img src={food.imageUrl} alt={food.foodName} className="w-full h-full object-cover" />
+                    <img
+                      src={food.imageUrl}
+                      alt={food.foodName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error("Image failed to load:", e.currentTarget.src);
+                        e.currentTarget.src = "/default-avatar.png"; // Fallback image
+                      }}
+                    />
                   ) : (
                     <p className="text-gray-400">No Image Available</p>
                   )}

@@ -104,6 +104,21 @@ export default function ProviderDashboard() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const imageFile = formData.get('foodImage');
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', imageFile);
+
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      body: uploadFormData,
+    });
+    
+    const { imageUrl } = await uploadRes.json();
+
+    // if (!imageUrl ) {
+    //   throw new Error('Invalid image URL');
+    // }
+    console.log("imageurl:", imageUrl);
     // const foodData = Object.fromEntries(formData.entries());
     const foodData = {
       foodName: formData.get('foodName'),
@@ -112,7 +127,7 @@ export default function ProviderDashboard() {
       quantity: formData.get('amount'),
       pickupLocation: formData.get('pickupLocation'),
       description: 'Food donation', // Add description field to form
-      imageUrl: formData.get('foodImage')?.toString() // Implement image upload logic
+      imageUrl: imageUrl // Implement image upload logic
     };
     console.log(foodData);
 
