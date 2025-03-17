@@ -1,11 +1,9 @@
-// dashboard/provider/page.tsx
-
 "use client";
 import { useEffect, useState } from "react";
 import React from "react";
-const MessageCircle = (await import("lucide-react")).MessageCircle;
 import Link from "next/link"; // If using Next.js
 import { getSocket } from "@/lib/socket-client";
+import { MessageCircle } from "lucide-react"; // Import the MessageCircle icon
 
 declare global {
   interface Window {

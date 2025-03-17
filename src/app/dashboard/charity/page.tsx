@@ -1,10 +1,9 @@
-// dashboard/charity/page.tsx
-
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSocket } from "@/lib/socket-client";
 import { connectSocket } from "@/lib/socket-client";
+import Image from "next/image"; // Import the Image component
 
 interface Food {
   _id: string;
@@ -38,6 +37,7 @@ export default function CharityDashboard() {
       }
     };
     fetchFoods();
+
     // Listen for food status updates
     socket?.on("food-status-updated", (updatedFood: Food) => {
       setFoods(prev => prev.filter(f => f._id !== updatedFood._id));
@@ -46,7 +46,7 @@ export default function CharityDashboard() {
     return () => {
       socket?.off("food-status-updated");
     };
-  }, []);
+  }, [socket]);
 
   const handleRequest = async (foodId: string) => {
     try {
@@ -57,17 +57,14 @@ export default function CharityDashboard() {
           charityId: localStorage.getItem("userId") // Add charity ID
         })
       });
-      
+
       if (res.ok) {
         const { chatId } = await res.json();
-        // router.push(`/chat/${chatId}`);
-
-         // Connect to socket immediately
-      const socket = connectSocket(localStorage.getItem("token")!);
-      socket.emit("join-chat", chatId);
-      router.push(`/chat/${chatId}`);
-      }
-      else {
+        // Connect to socket immediately
+        const socket = connectSocket(localStorage.getItem("token")!);
+        socket.emit("join-chat", chatId);
+        router.push(`/chat/${chatId}`);
+      } else {
         const data = await res.json();
         console.error("Request failed:", data.error);
       }
@@ -122,9 +119,6 @@ export default function CharityDashboard() {
               >
                 {/* Veg/Non-Veg Badge */}
                 <div className="absolute top-2 right-2 flex items-center gap-2">
-                  
-
-                  {/* Veg/Non-Veg Badge */}
                   <span
                     className={`px-2 py-1 text-sm font-semibold rounded ${
                       food.isVeg
@@ -145,9 +139,11 @@ export default function CharityDashboard() {
                 {/* Food Image */}
                 <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                   {food.imageUrl ? (
-                    <img
+                    <Image
                       src={food.imageUrl}
                       alt={food.foodName}
+                      width={200}
+                      height={200}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         console.error("Image failed to load:", e.currentTarget.src);
@@ -169,9 +165,9 @@ export default function CharityDashboard() {
                 <p className="text-teal-700">{food.foodCategory}</p>
 
                 <p className="text-gray-600 font-semibold">Provider:</p>
-                    <p className="text-gray-600 bg-white">
-                      {food.providerName}
-                    </p>
+                <p className="text-gray-600 bg-white">
+                  {food.providerName}
+                </p>
 
                 {/* View More Button */}
                 <button
@@ -186,15 +182,14 @@ export default function CharityDashboard() {
                 {/* Expanded Details */}
                 {expandedFood === food._id && (
                   <div className="mt-2 border-t pt-2">
-                    
                     <p className="text-gray-600 font-semibold">
                       Food description:{" "}
                     </p>
                     <p className="text-teal-700 bg-white">{food.description}</p>
 
                     {/* Location */}
-                <p className="text-gray-600 font-semibold mt-2">Location:</p>
-                <p className="text-teal-700 mt-2">{food.pickupLocation}</p>
+                    <p className="text-gray-600 font-semibold mt-2">Location:</p>
+                    <p className="text-teal-700 mt-2">{food.pickupLocation}</p>
 
                     {/* Map Placeholder */}
                     <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center mt-2">
