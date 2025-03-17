@@ -60,7 +60,16 @@ export default function ChatUI() {
     socket?.emit("join-chat", chatId);
 
     // Handle new messages
-    const handleNewMessage = (message) => {
+    type MessageType = {
+      _id: string;
+      sender: string;
+      text: string;
+      timestamp: string;
+      userId?: string; // Optional in case it's not always present
+      temporary?: boolean;
+    };
+    
+    const handleNewMessage = (message: MessageType) => {
       setMessages((prev) => [...prev, message]);
       scrollToBottom();
     };

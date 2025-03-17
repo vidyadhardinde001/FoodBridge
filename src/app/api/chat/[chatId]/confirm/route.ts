@@ -3,6 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { connectDB, Chat, Food } from '@/lib/db';
+import { getSocketServer } from "@/lib/socket"; // Adjust path if needed
 
 export async function PATCH(req: Request, { params }: { params: { chatId: string } }) {
   await connectDB();

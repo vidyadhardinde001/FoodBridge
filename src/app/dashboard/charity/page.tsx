@@ -6,10 +6,23 @@ import { useState, useEffect } from "react";
 import { getSocket } from "@/lib/socket-client";
 import { connectSocket } from "@/lib/socket-client";
 
+interface Food {
+  _id: string;
+  foodName: string;
+  foodCategory: string;
+  quantity: number;
+  providerName: string;
+  pickupLocation: string;
+  description: string;
+  isVeg: boolean;
+  imageUrl?: string;
+  status: string;
+}
+
 export default function CharityDashboard() {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [foods, setFoods] = useState([]);
+  const [foods, setFoods] = useState<Food[]>([]);
   const [expandedFood, setExpandedFood] = useState<string | null>(null);
   const socket = getSocket();
 
@@ -18,7 +31,7 @@ export default function CharityDashboard() {
       try {
         const res = await fetch("/api/food");
         if (!res.ok) throw new Error("Failed to fetch food data");
-        const data = await res.json();
+        const data: Food[] = await res.json();
         setFoods(data);
       } catch (error) {
         console.error("Error fetching food data:", error);
@@ -26,7 +39,7 @@ export default function CharityDashboard() {
     };
     fetchFoods();
     // Listen for food status updates
-    socket?.on("food-status-updated", (updatedFood) => {
+    socket?.on("food-status-updated", (updatedFood: Food) => {
       setFoods(prev => prev.filter(f => f._id !== updatedFood._id));
     });
 
@@ -132,7 +145,15 @@ export default function CharityDashboard() {
                 {/* Food Image */}
                 <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                   {food.imageUrl ? (
-                    <img src={food.imageUrl} alt={food.foodName} className="w-full h-full object-cover" />
+                    <img
+                      src={food.imageUrl}
+                      alt={food.foodName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error("Image failed to load:", e.currentTarget.src);
+                        e.currentTarget.src = "/default-avatar.png"; // Fallback image
+                      }}
+                    />
                   ) : (
                     <p className="text-gray-400">No Image Available</p>
                   )}

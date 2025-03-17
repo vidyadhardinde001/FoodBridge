@@ -3,10 +3,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import React from "react";
-import { MessageCircle } from "lucide-react"; // Import Lucide icon
+const MessageCircle = (await import("lucide-react")).MessageCircle;
 import Link from "next/link"; // If using Next.js
 import { getSocket } from "@/lib/socket-client";
-import FoodList from "@/sections/FoodList";
 
 declare global {
   interface Window {
@@ -14,13 +13,35 @@ declare global {
   }
 }
 
+type Chat = {
+  _id: string;
+  messages: any[]; // Replace `any` with the actual message type if known
+};
+
+type Message = {
+  _id: string;
+  chatId: string;
+  content: string; // Adjust based on actual message structure
+};
+
+type Food = {
+  _id: string;
+  foodName: string;
+  foodCategory: string;
+  foodType: string;
+  quantity: number;
+  pickupLocation: string;
+  description: string;
+  imageUrl: string;
+};
+
 export default function ProviderDashboard() {
   const socket = getSocket();
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [foods, setFoods] = useState([]);
+  const [foods, setFoods] = useState<Food[]>([]);
   const [map, setMap] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
-  const [chats, setChats] = useState([]);
+  const [chats, setChats] = useState<Chat[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,38 +60,46 @@ export default function ProviderDashboard() {
         const res = await fetch("/api/food?provider=true", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
+        if (!res.ok) throw new Error("Failed to fetch foods");
         const data = await res.json();
         setFoods(data);
       } catch (error) {
         console.error("Error fetching foods:", error);
       }
     };
-    fetchFoods();
 
     const fetchChats = async () => {
-      const res = await fetch("/api/chat", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "X-User-Role": "provider"
-        }
-      });
-      const data = await res.json();
-      setChats(data);
+      try {
+        const res = await fetch("/api/chat", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "X-User-Role": "provider"
+          }
+        });
+        if (!res.ok) throw new Error("Failed to fetch chats");
+        const data = await res.json();
+        setChats(data);
+      } catch (error) {
+        console.error("Error fetching chats:", error);
+      }
     };
 
+    fetchFoods();
     fetchChats();
 
     // Listen for new messages
-    socket?.on("new-message", (message) => {
-      setChats(prevChats => prevChats.map(chat =>
-        chat._id === message.chatId ?
-          { ...chat, messages: [...chat.messages, message] } :
-          chat
-      ));
+    socket?.on("new-message", (message: Message) => {
+      setChats((prevChats: Chat[]) =>
+        prevChats.map((chat) =>
+          chat._id === message.chatId
+            ? { ...chat, messages: [...chat.messages, message] }
+            : chat
+        )
+      );
     });
 
     // Listen for new food listings
-    socket?.on("new-food-added", (newFood) => {
+    socket?.on("new-food-added", (newFood: Food) => {
       setFoods(prev => [newFood, ...prev]);
     });
 
@@ -78,7 +107,7 @@ export default function ProviderDashboard() {
       socket?.off("new-food-added");
       socket?.off("new-message");
     };
-  }, []);
+  }, [socket]);
 
   const initializeMap = () => {
     const defaultLocation = { lat: 19.076, lng: 72.877 }; // Mumbai
@@ -105,19 +134,35 @@ export default function ProviderDashboard() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    // const foodData = Object.fromEntries(formData.entries());
-    const foodData = {
-      foodName: formData.get('foodName'),
-      foodCategory: formData.get('foodCategory'),
-      foodType: formData.get("foodType"), // New field for Veg/Non-Veg
-      quantity: formData.get('amount'),
-      pickupLocation: formData.get('pickupLocation'),
-      description: 'Food donation', // Add description field to form
-      imageUrl: formData.get('foodImage')?.toString() // Implement image upload logic
-    };
-    console.log(foodData);
-
+    const imageFile = formData.get('foodImage');
+  
+    // Check if imageFile is null or undefined
+    if (!imageFile) {
+      console.error("No image file provided");
+      return; // Exit the function early if no file is provided
+    }
+  
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', imageFile); // Now imageFile is guaranteed to be a valid Blob or string
+  
     try {
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+      if (!uploadRes.ok) throw new Error("Failed to upload image");
+      const { imageUrl } = await uploadRes.json();
+  
+      const foodData = {
+        foodName: formData.get('foodName'),
+        foodCategory: formData.get('foodCategory'),
+        foodType: formData.get("foodType"),
+        quantity: formData.get('amount'),
+        pickupLocation: formData.get('pickupLocation'),
+        description: 'Food donation',
+        imageUrl: imageUrl
+      };
+  
       const res = await fetch("/api/food", {
         method: "POST",
         headers: {
@@ -126,12 +171,11 @@ export default function ProviderDashboard() {
         },
         body: JSON.stringify(foodData),
       });
-
-      if (res.ok) {
-        const newFood = await res.json();
-        setFoods([newFood, ...foods]);
-        setExpanded(null);
-      }
+  
+      if (!res.ok) throw new Error("Failed to submit food data");
+      const newFood = await res.json();
+      setFoods([newFood, ...foods]);
+      setExpanded(null);
     } catch (error) {
       console.error("Submission error:", error);
     }
@@ -160,7 +204,6 @@ export default function ProviderDashboard() {
         >
           Add Surplus Food ➕
         </button>
-        {/* Chat Button */}
         <Link href="/chat">
           <button
             className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition"
@@ -170,8 +213,6 @@ export default function ProviderDashboard() {
           </button>
         </Link>
       </div>
-
-
 
       {expanded === "addFood" && (
         <section className="p-6 bg-white shadow-lg rounded-lg">

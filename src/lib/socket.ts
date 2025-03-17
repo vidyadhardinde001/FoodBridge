@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { connectDB } from './db.js';
 import jwt from 'jsonwebtoken';
-import { Chat } from './db.js'; // Import your Chat model
+import { Chat } from './db'; // Import your Chat model
 
 type User = {
   id: string;
@@ -38,40 +38,46 @@ export const initSocket = (server: any): Server => {
       console.log(`User ${user.id} joined chat ${chatId}`);
     });
 
-    // Update message handling to include proper user info
-// In socket.ts
-socket.on('send-message', async ({ chatId, text, sender, userId }) => {
-  try {
-    const newMessage = {
-      sender,
-      text,
-      timestamp: new Date(),
-      userId
-    };
+    socket.on('send-message', async ({ chatId, text, sender, userId }) => {
+      try {
+        const newMessage = {
+          sender,
+          text,
+          timestamp: new Date(),
+          userId
+        };
 
-    const updatedChat = await Chat.findByIdAndUpdate(
-      chatId,
-      {
-        $push: { messages: newMessage },
-        $set: { updatedAt: new Date() }
-      },
-      { new: true }
-    ).populate('charityId providerId');
+        const updatedChat = await Chat.findByIdAndUpdate(
+          chatId,
+          {
+            $push: { messages: newMessage },
+            $set: { updatedAt: new Date() }
+          },
+          { new: true }
+        ).populate('charityId providerId');
 
-    io?.to(chatId).emit("new-message", {
-      ...newMessage,
-      _id: updatedChat.messages.slice(-1)[0]._id,
-      chatId,
+        io?.to(chatId).emit("new-message", {
+          ...newMessage,
+          _id: updatedChat.messages.slice(-1)[0]._id,
+          chatId,
+        });
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
     });
-  } catch (error) {
-    console.error('Error sending message:', error);
-  }
-});
 
     socket.on('disconnect', () => {
       console.log(`User disconnected: ${user.id}`);
     });
   });
 
+  return io;
+};
+
+// ✅ Function to get the initialized WebSocket server instance
+export const getSocketServer = (): Server => {
+  if (!io) {
+    throw new Error("Socket server is not initialized");
+  }
   return io;
 };

@@ -27,7 +27,6 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const food = await Food.findByIdAndUpdate(
       params.id,
       { 
-        status: 'pending', 
         charity: charityId // Use proper charity ID
       },
       { new: true }

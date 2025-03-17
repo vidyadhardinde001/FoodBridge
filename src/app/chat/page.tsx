@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+const MessageCircle = (await import("lucide-react")).MessageCircle;
 import Image from "next/image";
 
 interface ChatContact {

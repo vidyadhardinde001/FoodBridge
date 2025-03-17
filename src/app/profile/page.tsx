@@ -3,8 +3,21 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaUserCircle, FaEdit, FaSave, FaCamera, FaTrash } from "react-icons/fa";
 
+// Define types for user data and order history
+type UserData = {
+  organizationName: string;
+  contactPerson: string;
+  contactNumber: string;
+  email: string;
+  location: string;
+  userType: string;
+  profileImage: string;
+};
+
+type OrderHistory = string[]; // Adjust this type based on the actual structure of your order history
+
 const Profile = () => {
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<UserData>({
     organizationName: "",
     contactPerson: "",
     contactNumber: "",
@@ -13,7 +26,7 @@ const Profile = () => {
     userType: "",
     profileImage: "",
   });
-  const [orderHistory, setOrderHistory] = useState([]);
+  const [orderHistory, setOrderHistory] = useState<OrderHistory>([]);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -28,8 +41,10 @@ const Profile = () => {
     }
   }, []);
 
-  const handleChange = (e) => {
-    setUserData({ ...userData, [e.target.name]: e.target.value });
+  // Add type to the event parameter
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setUserData((prevData) => ({ ...prevData, [name]: value }));
   };
 
   const handleSaveProfile = () => {
@@ -41,12 +56,13 @@ const Profile = () => {
     setIsEditing(true);
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
+  // Add type to the event parameter
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUserData((prevData) => ({ ...prevData, profileImage: reader.result }));
+        setUserData((prevData) => ({ ...prevData, profileImage: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -55,7 +71,6 @@ const Profile = () => {
   return (
     <div className="w-full min-h-screen p-10 bg-gradient-to-r from-gray-900 to-gray-800 flex justify-center items-center">
       <div className="max-w-4xl w-full bg-gray-900 p-8 shadow-2xl rounded-2xl text-white border border-gray-700 relative">
-
         {/* Profile Header */}
         <div className="flex flex-col items-center">
           <label className="relative cursor-pointer">
@@ -63,8 +78,8 @@ const Profile = () => {
               <Image
                 src={userData.profileImage}
                 alt="Profile"
-                width={112}  // 28 * 4 (to match tailwind w-28)
-                height={112} // 28 * 4
+                width={112}
+                height={112}
                 className="rounded-full border-4 border-gray-500 shadow-lg object-cover"
               />
             ) : (
@@ -89,7 +104,6 @@ const Profile = () => {
           <p className="text-gray-500">{userData.location || "Location"}</p>
         </div>
 
-
         {/* Personal Information */}
         <div className="mt-8 bg-gray-800 p-6 shadow-md rounded-lg border border-gray-700">
           <h3 className="text-xl font-semibold text-gray-200 border-b border-gray-700 pb-2">Personal Information</h3>
@@ -107,7 +121,7 @@ const Profile = () => {
                 <input
                   type="text"
                   name={name}
-                  value={userData[name]}
+                  value={userData[name as keyof UserData]}
                   onChange={handleChange}
                   className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring focus:ring-blue-400"
                   disabled={!isEditing}
