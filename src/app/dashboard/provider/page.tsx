@@ -59,6 +59,7 @@ export default function ProviderDashboard() {
     const foodData = {
       foodName: formData.get('foodName'),
       foodCategory: formData.get('foodCategory'),
+      foodType: formData.get("foodType"), // New field for Veg/Non-Veg
       quantity: formData.get('amount'),
       pickupLocation: formData.get('pickupLocation'),
       description: 'Food donation', // Add description field to form
@@ -153,6 +154,18 @@ export default function ProviderDashboard() {
               </select>
             </div>
 
+            <div>
+  <label className="block text-gray-700 text-sm font-bold mb-2">Food Type</label>
+  <select
+    name="foodType"
+    className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+    required
+  >
+    <option value="">Select type...</option>
+    <option value="Vegetarian">Vegetarian</option>
+    <option value="Non-Vegetarian">Non-Vegetarian</option>
+  </select>
+</div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">Upload Food Image</label>
               <input
