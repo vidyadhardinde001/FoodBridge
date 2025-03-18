@@ -120,11 +120,10 @@ export default function CharityDashboard() {
                 {/* Veg/Non-Veg Badge */}
                 <div className="absolute top-2 right-2 flex items-center gap-2">
                   <span
-                    className={`px-2 py-1 text-sm font-semibold rounded ${
-                      food.isVeg
+                    className={`px-2 py-1 text-sm font-semibold rounded ${food.isVeg
                         ? "bg-green-500 text-white"
                         : "bg-red-500 text-white"
-                    }`}
+                      }`}
                   >
                     {food.isVeg ? "Veg" : "Non-Veg"}
                   </span>
@@ -140,7 +139,7 @@ export default function CharityDashboard() {
                 <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
                   {food.imageUrl ? (
                     <Image
-                      src={food.imageUrl}
+                      src={food.imageUrl.startsWith("/") || food.imageUrl.startsWith("http") ? food.imageUrl : "/default-avatar.png"}
                       alt={food.foodName}
                       width={200}
                       height={200}
