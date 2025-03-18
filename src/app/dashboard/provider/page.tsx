@@ -41,6 +41,8 @@ export default function ProviderDashboard() {
   const [marker, setMarker] = useState<any>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false); // Loading state
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false); // Success state
 
   useEffect(() => {
     if (!window.google) {
@@ -131,34 +133,37 @@ export default function ProviderDashboard() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true); // Start loading
+  
     const formData = new FormData(e.currentTarget);
-    const imageFile = formData.get('foodImage');
+    const imageFile = formData.get("foodImage");
   
     // Check if imageFile is null or undefined
     if (!imageFile) {
       console.error("No image file provided");
+      setIsLoading(false); // Stop loading
       return; // Exit the function early if no file is provided
     }
   
     const uploadFormData = new FormData();
-    uploadFormData.append('file', imageFile); // Now imageFile is guaranteed to be a valid Blob or string
+    uploadFormData.append("file", imageFile); // Now imageFile is guaranteed to be a valid Blob or string
   
     try {
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
         body: uploadFormData,
       });
       if (!uploadRes.ok) throw new Error("Failed to upload image");
       const { imageUrl } = await uploadRes.json();
   
       const foodData = {
-        foodName: formData.get('foodName'),
-        foodCategory: formData.get('foodCategory'),
+        foodName: formData.get("foodName"),
+        foodCategory: formData.get("foodCategory"),
         foodType: formData.get("foodType"),
-        quantity: formData.get('amount'),
-        pickupLocation: formData.get('pickupLocation'),
-        description: 'Food donation',
-        imageUrl: imageUrl
+        quantity: formData.get("amount"),
+        pickupLocation: formData.get("pickupLocation"),
+        description: "Food donation",
+        imageUrl: imageUrl,
       };
   
       const res = await fetch("/api/food", {
@@ -174,8 +179,14 @@ export default function ProviderDashboard() {
       const newFood = await res.json();
       setFoods([newFood, ...foods]);
       setExpanded(null);
+  
+      // Show success message
+      setIsSubmitted(true);
+      setTimeout(() => setIsSubmitted(false), 1500); // Hide after 3 seconds
     } catch (error) {
       console.error("Submission error:", error);
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -295,12 +306,28 @@ export default function ProviderDashboard() {
 
             <button
               type="submit"
-              className="w-full p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
+              disabled={isLoading} // Disable button during loading
+              className="w-full p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center"
             >
-              Submit
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              ) : (
+                "Submit"
+              )}
             </button>
           </form>
         </section>
+
+
+      )}
+      {isSubmitted && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center animate-bounce">
+            <div className="text-4xl mb-4">🎉</div> {/* Emoji for celebration */}
+            <h2 className="text-2xl font-bold text-green-600 mb-2">Submitted Successfully!</h2>
+            <p className="text-gray-600">Your food donation has been recorded.</p>
+          </div>
+        </div>
       )}
     </>
   );

@@ -1,5 +1,3 @@
-// /chat/[chatId]/page.tsx
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -13,14 +11,13 @@ export default function ChatUI() {
   const { chatId } = useParams();
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
-  const [otherUser, setOtherUser] = useState<{ name: string; image: string }>({ 
-    name: "Loading...", 
-    image: "/default-avatar.png" 
+  const [otherUser, setOtherUser] = useState<{ name: string; image: string }>({
+    name: "Loading...",
+    image: "/default-avatar.png",
   });
   const [userRole, setUserRole] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socket = getSocket();
-  // const userRole = localStorage.getItem("role");
 
   useEffect(() => {
     const role = localStorage.getItem("role");
@@ -50,7 +47,7 @@ export default function ChatUI() {
     };
 
     loadChatDetails();
-  }, [chatId,userRole]);
+  }, [chatId, userRole]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -67,17 +64,34 @@ export default function ChatUI() {
       timestamp: string;
       userId?: string; // Optional in case it's not always present
       temporary?: boolean;
+      tempId?: string; // Unique identifier for temporary messages
     };
-    
+
     const handleNewMessage = (message: MessageType) => {
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        // Check if this message matches a temporary message
+        const existingTempIndex = prev.findIndex(
+          (msg) => msg.tempId && msg.text === message.text
+        );
+
+        if (existingTempIndex !== -1) {
+          // Replace the temporary message with the actual message
+          const updatedMessages = [...prev];
+          updatedMessages[existingTempIndex] = message;
+          return updatedMessages;
+        } else {
+          // Add the new message if no matching temporary message is found
+          return [...prev, message];
+        }
+      });
+
       scrollToBottom();
     };
-  
+
     socket.on("new-message", handleNewMessage);
 
     return () => {
-      socket.off("new-message", handleNewMessage); 
+      socket.off("new-message", handleNewMessage);
       socket?.emit("leave-chat", chatId);
     };
   }, [chatId]);
@@ -94,27 +108,27 @@ export default function ChatUI() {
     if (!input.trim()) return;
     const userId = localStorage.getItem("userId");
 
-
+    // Create a temporary message
     const tempMessage = {
-      _id: Date.now().toString(),
+      _id: Date.now().toString(), // Unique ID for temporary message
       text: input,
       sender: userRole,
       timestamp: new Date(),
-      temporary: true
+      temporary: true,
+      tempId: Date.now().toString(), // Unique identifier for temporary message
     };
-    setMessages(prev => [...prev, tempMessage]);
+    setMessages((prev) => [...prev, tempMessage]);
 
+    // Clear input
     setInput("");
-    
+
+    // Send message to server
     socket?.emit("send-message", {
       chatId,
       text: input,
       sender: userRole,
-      userId 
+      userId,
     });
-    // setMessages(prev => [...prev, tempMessage]);
-
-    // setInput("");
   };
 
   return (
@@ -123,7 +137,7 @@ export default function ChatUI() {
         {/* Chat Header */}
         <div className="flex items-center justify-between bg-white/20 p-3 rounded-lg shadow-md border border-white/30">
           <div className="flex items-center space-x-3">
-            <Image 
+            <Image
               src={otherUser.image}
               alt="Profile"
               width={40}
@@ -145,8 +159,7 @@ export default function ChatUI() {
 
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg) => (
-          
+          {messages.map((msg) => (
             <motion.div
               key={msg._id}
               className={`flex ${msg.sender === userRole ? "justify-end" : "justify-start"}`}
@@ -183,11 +196,11 @@ export default function ChatUI() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyPress={(e) => e.key === "Enter" && sendMessage()}
             className="flex-1 p-2 mx-2 bg-white/30 text-white rounded-lg outline-none placeholder-white"
             placeholder="Type a message..."
           />
-          <button 
+          <button
             onClick={sendMessage}
             className="bg-black p-3 rounded-lg hover:bg-gray-800 transition-all"
           >

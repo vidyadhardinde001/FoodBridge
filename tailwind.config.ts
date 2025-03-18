@@ -14,6 +14,9 @@ const config: Config = {
       lg: "1200px",
     },
     extend: {
+      fontFamily: {
+        montserrat: ["Montserrat", "sans-serif"], // Add Montserrat
+      },
       container: {
         center: true,
         padding: {
@@ -22,7 +25,17 @@ const config: Config = {
         },
       },
       spacing: {
-        square: "100%", // Utility for square dimensions
+        square: "100%",
+      },
+      animation: {
+        bounce: "bounce 1s ease-in-out",
+      },
+      keyframes: {
+        bounce: {
+          "0%, 20%, 50%, 80%, 100%": { transform: "translateY(0)" },
+          "40%": { transform: "translateY(-20px)" },
+          "60%": { transform: "translateY(-10px)" },
+        },
       },
     },
   },
