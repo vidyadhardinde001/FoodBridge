@@ -149,7 +149,21 @@ export default function CharityDashboard() {
 
                   {/* Food Image */}
                   <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                    {food.imageUrl ? (
+                  {food.imageUrl ? (
+                    console.log("Received request for:", food.imageUrl),
+                    <img
+                      src={`/api/proxy-image?url=${encodeURIComponent(food.imageUrl)}`}
+                      alt={food.foodName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error("Image failed to load:", e.currentTarget.src);
+                        e.currentTarget.src = "/default-avatar.png"; // Fallback image
+                      }}
+                    />
+                  ) : (
+                    <p className="text-gray-400">No Image Available</p>
+                  )}
+                    {/* {food.imageUrl ? (
                       <Image
                         src={
                           food.imageUrl.startsWith("/") ||
@@ -168,7 +182,7 @@ export default function CharityDashboard() {
                       />
                     ) : (
                       <p className="text-gray-400">No Image Available</p>
-                    )}
+                    )} */}
                   </div>
 
                   <p className="text-gray-600 font-semibold">Quantity:</p>
