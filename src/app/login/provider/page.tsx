@@ -95,7 +95,7 @@ export default function ProviderLogin() {
           className="mt-6 text-white/80"
         >
           Don&apos;t have an account?{" "}
-          <Link href="/register/charity" className="text-white font-semibold underline">
+          <Link href="/register/provider" className="text-white font-semibold underline">
             Register here
           </Link>
         </motion.p>

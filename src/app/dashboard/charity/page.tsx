@@ -1,3 +1,5 @@
+// dashboard/charity/page.tsx
+
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -10,7 +12,12 @@ interface Food {
   foodName: string;
   foodCategory: string;
   quantity: number;
-  providerName: string;
+  provider: {  // Change from providerName
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
   pickupLocation: string;
   description: string;
   isVeg: boolean;
@@ -171,7 +178,7 @@ export default function CharityDashboard() {
                   <p className="text-teal-700">{food.foodCategory}</p>
 
                   <p className="text-gray-600 font-semibold">Provider:</p>
-                  <p className="text-gray-600 bg-white">{food.providerName}</p>
+                  <p className="text-gray-600 bg-white">{food.provider.name}</p>
 
                   {/* View More Button */}
                   <button

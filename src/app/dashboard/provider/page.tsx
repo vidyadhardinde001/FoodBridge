@@ -1,3 +1,5 @@
+// dashboard/provider/page.tsx
+
 "use client";
 import { useEffect, useState } from "react";
 import React from "react";
@@ -162,7 +164,7 @@ export default function ProviderDashboard() {
         foodType: formData.get("foodType"),
         quantity: formData.get("amount"),
         pickupLocation: formData.get("pickupLocation"),
-        description: "Food donation",
+        description: formData.get("description"),
         imageUrl: imageUrl,
       };
   
@@ -233,6 +235,16 @@ export default function ProviderDashboard() {
                 type="text"
                 name="foodName"
                 placeholder="Enter food name"
+                className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">Description</label>
+              <textarea
+                name="description"
+                placeholder="Enter food description"
                 className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
                 required
               />
