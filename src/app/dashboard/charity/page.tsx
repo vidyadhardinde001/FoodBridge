@@ -12,7 +12,7 @@ interface Food {
   foodName: string;
   foodCategory: string;
   quantity: number;
-  provider: {  // Change from providerName
+  provider: {
     name: string;
     email: string;
     phone: string;
@@ -23,6 +23,11 @@ interface Food {
   isVeg: boolean;
   imageUrl?: string;
   status: string;
+  reviews: {
+    rating: number;
+    comment: string;
+    user: string;
+  }[];
 }
 
 export default function CharityDashboard() {
@@ -47,7 +52,7 @@ export default function CharityDashboard() {
 
     // Listen for food status updates
     socket?.on("food-status-updated", (updatedFood: Food) => {
-      setFoods(prev => prev.filter(f => f._id !== updatedFood._id));
+      setFoods((prev) => prev.filter((f) => f._id !== updatedFood._id));
     });
 
     return () => {
@@ -61,8 +66,8 @@ export default function CharityDashboard() {
         method: "PATCH",
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({
-          charityId: localStorage.getItem("userId") // Add charity ID
-        })
+          charityId: localStorage.getItem("userId"), // Add charity ID
+        }),
       });
 
       if (res.ok) {
@@ -79,9 +84,21 @@ export default function CharityDashboard() {
       console.error("Request failed:", error);
     }
   };
+  const calculateAverageRating = (reviews: { rating: number }[]) => {
+    if (reviews.length === 0) return 0;
+    const total = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return total / reviews.length;
+  };
+
+  const handleViewReviews = (foodId: string) => {
+    router.push(`/review?foodId=${foodId}`);
+  };
 
   return (
-    <div className="w-full mx-auto p-6 min-h-screen bg-fit bg-center" style={{ backgroundImage: "url('/charity.png')" }}>
+    <div
+      className="w-full mx-auto p-6 min-h-screen bg-fit bg-center"
+      style={{ backgroundImage: "url('/charity.png')" }}
+    >
       {/* Overlay to make content readable */}
       <div className="absolute inset-0 bg-black bg-opacity-0"></div>
 
@@ -132,16 +149,20 @@ export default function CharityDashboard() {
                   {/* Veg/Non-Veg Badge */}
                   <div className="absolute top-2 right-2 flex items-center gap-2">
                     <span
-                      className={`px-2 py-1 text-sm font-semibold rounded ${food.isVeg
+                      className={`px-2 py-1 text-sm font-semibold rounded ${
+                        food.isVeg
                           ? "bg-green-500 text-white"
                           : "bg-red-500 text-white"
-                        }`}
+                      }`}
                     >
                       {food.isVeg ? "Veg" : "Non-Veg"}
                     </span>
 
                     {/* Checkbox */}
-                    <input type="checkbox" className="w-5 h-5 accent-teal-600" />
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 accent-teal-600"
+                    />
                   </div>
 
                   {/* Food Name */}
@@ -149,44 +170,31 @@ export default function CharityDashboard() {
 
                   {/* Food Image */}
                   <div className="w-full h-[300px] bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                  {food.imageUrl ? (
-                    console.log("Received request for:", food.imageUrl),
-                    <img
-                      src={`/api/proxy-image?url=${encodeURIComponent(food.imageUrl)}`}
-                      alt={food.foodName}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        console.error("Image failed to load:", e.currentTarget.src);
-                        e.currentTarget.src = "/default-avatar.png"; // Fallback image
-                      }}
-                    />
-                  ) : (
-                    <p className="text-gray-400">No Image Available</p>
-                  )}
-                    {/* {food.imageUrl ? (
-                      <Image
-                        src={
-                          food.imageUrl.startsWith("/") ||
-                            food.imageUrl.startsWith("http")
-                            ? food.imageUrl
-                            : "/default-avatar.png"
-                        }
+                    {food.imageUrl ? (
+                      <img
+                        src={`/api/proxy-image?url=${encodeURIComponent(
+                          food.imageUrl
+                        )}`}
                         alt={food.foodName}
-                        width={200}
-                        height={200}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          console.error("Image failed to load:", e.currentTarget.src);
+                          console.error(
+                            "Image failed to load:",
+                            e.currentTarget.src
+                          );
                           e.currentTarget.src = "/default-avatar.png"; // Fallback image
                         }}
                       />
                     ) : (
                       <p className="text-gray-400">No Image Available</p>
-                    )} */}
+                    )}
                   </div>
 
                   <p className="text-gray-600 font-semibold">Quantity:</p>
-                  <p className="text-green-600 text-2xl font-bold"> {food.quantity}</p>
+                  <p className="text-green-600 text-2xl font-bold">
+                    {" "}
+                    {food.quantity}
+                  </p>
 
                   <p className="text-gray-600 font-semibold">Category:</p>
                   <p className="text-teal-700">{food.foodCategory}</p>
@@ -194,10 +202,25 @@ export default function CharityDashboard() {
                   <p className="text-gray-600 font-semibold">Provider:</p>
                   <p className="text-gray-600 bg-white">{food.provider.name}</p>
 
+                  {/* Rating and Review Section */}
+                  <div className="mt-4">
+                    <div className="flex items-center">
+                      <span className="text-yellow-500 text-2xl">★★★★☆</span>
+                      <span className="ml-2 text-gray-600">(4.5)</span>
+                    </div>
+                    <button
+                      onClick={() => handleViewReviews(food._id)}
+                      className="mt-2 text-blue-600 hover:underline"
+                    >
+                      View All Reviews
+                    </button>
+                  </div>
                   {/* View More Button */}
                   <button
                     onClick={() =>
-                      setExpandedFood(expandedFood === food._id ? null : food._id)
+                      setExpandedFood(
+                        expandedFood === food._id ? null : food._id
+                      )
                     }
                     className="mt-3 flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-300 ease-in-out"
                   >
@@ -207,12 +230,20 @@ export default function CharityDashboard() {
                   {/* Expanded Details */}
                   {expandedFood === food._id && (
                     <div className="mt-2 border-t pt-2">
-                      <p className="text-gray-600 font-semibold">Food description: </p>
-                      <p className="text-teal-700 bg-white">{food.description}</p>
+                      <p className="text-gray-600 font-semibold">
+                        Food description:{" "}
+                      </p>
+                      <p className="text-teal-700 bg-white">
+                        {food.description}
+                      </p>
 
                       {/* Location */}
-                      <p className="text-gray-600 font-semibold mt-2">Location:</p>
-                      <p className="text-teal-700 mt-2">{food.pickupLocation}</p>
+                      <p className="text-gray-600 font-semibold mt-2">
+                        Location:
+                      </p>
+                      <p className="text-teal-700 mt-2">
+                        {food.pickupLocation}
+                      </p>
 
                       {/* Map Placeholder */}
                       <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center mt-2">
