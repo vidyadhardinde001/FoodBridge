@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { getSocket } from "@/lib/socket-client";
 import { connectSocket } from "@/lib/socket-client";
 import Image from "next/image"; // Import the Image component
+import { GoogleMap, LoadScript, Marker, useJsApiLoader } from "@react-google-maps/api";
 
 interface Food {
   _id: string;
@@ -28,6 +29,10 @@ interface Food {
     comment: string;
     user: string;
   }[];
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export default function CharityDashboard() {
@@ -35,7 +40,93 @@ export default function CharityDashboard() {
   const [search, setSearch] = useState("");
   const [foods, setFoods] = useState<Food[]>([]);
   const [expandedFood, setExpandedFood] = useState<string | null>(null);
+  const [charityLocation, setCharityLocation] = useState({ lat: 0, lng: 0 });
+  const [distances, setDistances] = useState<{ [key: string]: string }>({});
+  const [map, setMap] = useState<google.maps.Map | null>(null);
   const socket = getSocket();
+
+  const loadDistance = async (foodId: string, origin: { lat: number; lng: number }) => {
+    try {
+      const response = await fetch(`https://routes.googleapis.com/directions/v2:computeRoutes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+          "X-Goog-FieldMask": "routes.distanceMeters",
+        },
+        body: JSON.stringify({
+          origin: {
+            location: {
+              latLng: {
+                latitude: origin.lat,
+                longitude: origin.lng,
+              },
+            },
+          },
+          destination: {
+            location: {
+              latLng: {
+                latitude: charityLocation.lat,
+                longitude: charityLocation.lng,
+              },
+            },
+          },
+          travelMode: "DRIVE",
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Routes API Error:", errorData);
+        return;
+      }
+  
+      const data = await response.json();
+      if (data.routes?.[0]?.distanceMeters) {
+        setDistances((prev) => ({
+          ...prev,
+          [foodId]: `${(data.routes[0].distanceMeters / 1000).toFixed(1)} km`,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching distance:", error);
+    }
+  };
+
+  const handleMapRedirect = (providerCoords: { lat: number; lng: number }) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${providerCoords.lat},${providerCoords.lng}`;
+    window.open(url, "_blank");
+  };
+
+  useEffect(() => {
+    if (expandedFood && charityLocation.lat !== 0) {
+      const food = foods.find(f => f._id === expandedFood);
+      if (food && !distances[expandedFood]) {
+        loadDistance(expandedFood, food.coordinates);
+      }
+    }
+  }, [expandedFood, charityLocation]);
+
+
+  useEffect(() => {
+    const fetchCharityLocation = async () => {
+      try {
+        const res = await fetch(`/api/users/${localStorage.getItem("userId")}`);
+        if (!res.ok) throw new Error("Failed to fetch charity location");
+        const data = await res.json();
+        setCharityLocation(data.coordinates);
+      } catch (error) {
+        console.error("Error fetching charity location:", error);
+      }
+    };
+  
+    fetchCharityLocation();
+  }, []); // Empty dependency array to run only once on mount
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: ["geometry"],
+  });
 
   useEffect(() => {
     const fetchFoods = async () => {
@@ -93,6 +184,10 @@ export default function CharityDashboard() {
   const handleViewReviews = (foodId: string) => {
     router.push(`/review?foodId=${foodId}`);
   };
+
+  
+
+  if (!isLoaded) return <p>Loading Map...</p>;
 
   return (
     <div
@@ -245,10 +340,47 @@ export default function CharityDashboard() {
                         {food.pickupLocation}
                       </p>
 
-                      {/* Map Placeholder */}
+                      {/* Map Placeholder
                       <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center mt-2">
                         <p className="text-gray-400">Map Placeholder</p>
+                      </div> */}
+
+<div className="w-full h-64 relative">
+                      <LoadScript 
+                        googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
+                        libraries={['geometry']}
+                      >
+                        <GoogleMap
+                          mapContainerStyle={{ width: '100%', height: '100%' }}
+                          center={food.coordinates}
+                          zoom={14}
+                        >
+                          <Marker position={food.coordinates} />
+                          <Marker 
+                            position={charityLocation} 
+                            label="You" 
+                            icon={{
+                              path: google.maps.SymbolPath.CIRCLE,
+                              scale: 8,
+                              fillColor: "#4285F4",
+                              fillOpacity: 1,
+                              strokeWeight: 2,
+                              strokeColor: "#FFFFFF"
+                            }}
+                          />
+                        </GoogleMap>
+                      </LoadScript>
+                      <div className="absolute top-2 left-2 bg-white p-2 rounded">
+                        Distance: {distances[food._id] || 'Calculating...'}
                       </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleMapRedirect(food.coordinates)}
+                      className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg w-full hover:bg-blue-600 transition"
+                    >
+                      Open in Google Maps
+                    </button>
 
                       {/* Contact Button */}
                       <button

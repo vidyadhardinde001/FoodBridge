@@ -11,11 +11,11 @@ export async function POST(req: Request) {
     await connectDB();
 
     // Parse the request body
-    const { role, ...userData } = await req.json();
-    console.log('Registration request:', { role, ...userData });
+    const { role,coordinates, ...userData } = await req.json();
+    console.log('Registration request:', { role, ...userData, coordinates });
 
     // Validate required fields
-    if (!role || !userData.email || !userData.password || !userData.name || !userData.phone || !userData.address) {
+    if (!role || !userData.email || !userData.password || !userData.name || !userData.phone ||  !coordinates) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       ...userData,
       password: hashedPassword,
       role,
+      coordinates: coordinates
     });
 
     console.log('User created successfully:', user);

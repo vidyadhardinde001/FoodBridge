@@ -1,9 +1,12 @@
+// register/charity/page.tsx
+
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import React from "react";
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
 export default function CharityRegister() {
   const [formData, setFormData] = useState({
@@ -17,6 +20,36 @@ export default function CharityRegister() {
   const [error, setError] = useState("");
   const router = useRouter();
 
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [address, setAddress] = useState("");
+
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [addressSearch, setAddressSearch] = useState("");
+
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+  const mapContainerStyle = {
+    width: '100%',
+    height: '300px'
+  };
+  
+
+  useEffect(() => {
+    const storedLocation = localStorage.getItem('tempLocation');
+    if (storedLocation) {
+      const { coordinates, address } = JSON.parse(storedLocation);
+      setSelectedLocation(coordinates);
+      setAddress(address);
+      localStorage.removeItem('tempLocation');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showLocationPicker) {
+      router.push(`/register/location?role=charity`); // or provider
+    }
+  }, [showLocationPicker, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -24,17 +57,22 @@ export default function CharityRegister() {
       !formData.email ||
       !formData.password ||
       !formData.phone ||
-      !formData.address ||
       !formData.organizationName
     ) {
       setError("All fields are required");
       return;
     }
+
+    if (!selectedLocation) {
+      setError("Please select a location on the map");
+      return;
+    }
+    
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, role: "charity" })
+        body: JSON.stringify({ ...formData,address,coordinates: selectedLocation, role: "charity" })
       });
 
       if (res.ok) {
@@ -87,7 +125,28 @@ export default function CharityRegister() {
           <input type="email" placeholder="Email" name="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
           <input type="password" placeholder="Password" name="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
           <input type="text" placeholder="Phone" name="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
-          <input type="text" placeholder="Address" name="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
+          <div className="w-full">
+            <label className="block text-gray-700 text-sm font-bold mb-2 text-white">
+              Location
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Click to select location"
+                value={address}
+                readOnly
+                className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowLocationPicker(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Select
+              </button>
+            </div>
+          </div>
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} type="submit" className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-3 rounded-lg shadow-md hover:shadow-xl transition font-semibold">Register</motion.button>
           {error && <p className="text-red-400 text-sm">{error}</p>}
         </motion.form>

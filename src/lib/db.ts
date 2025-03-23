@@ -19,6 +19,10 @@ interface UserDocument extends mongoose.Document {
   password: string;
   phone: string;
   address: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
   role: 'provider' | 'charity';
   organizationName?: string;
 }
@@ -29,6 +33,10 @@ const UserSchema = new mongoose.Schema<UserDocument>({
   password: { type: String, required: true },
   phone: { type: String, required: true },
   address: { type: String, required: true },
+  coordinates: {
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+  },
   role: { type: String, enum: ['provider', 'charity'], required: true },
   organizationName: { type: String },
 });
