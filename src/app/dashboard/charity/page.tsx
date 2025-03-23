@@ -148,7 +148,7 @@ export default function CharityDashboard() {
                   <h3 className="text-lg font-semibold">{food.foodName}</h3>
 
                   {/* Food Image */}
-                  <div className="w-full h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                  <div className="w-full h-[300px] bg-white rounded-lg overflow-hidden flex items-center justify-center">
                   {food.imageUrl ? (
                     console.log("Received request for:", food.imageUrl),
                     <img

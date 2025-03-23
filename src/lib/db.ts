@@ -1,4 +1,5 @@
 // lib/db.ts
+
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
@@ -7,10 +8,11 @@ import mongoose from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI!;
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
 
-// if (!MONGODB_URI) {
-//   throw node test.jsnew Error('Please define the MONGODB_URI environment variable');
-// }
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable');
+}
 
+// User Schema
 interface UserDocument extends mongoose.Document {
   name: string;
   email: string;
@@ -28,12 +30,12 @@ const UserSchema = new mongoose.Schema<UserDocument>({
   phone: { type: String, required: true },
   address: { type: String, required: true },
   role: { type: String, enum: ['provider', 'charity'], required: true },
-  organizationName: { type: String }
+  organizationName: { type: String },
 });
 
 export const User = mongoose.models.User || mongoose.model<UserDocument>('User', UserSchema);
 
-// Add to existing User schema
+// Food Schema
 interface FoodDocument extends mongoose.Document {
   foodName: string;
   foodCategory: string;
@@ -43,7 +45,11 @@ interface FoodDocument extends mongoose.Document {
   pickupLocation: string;
   description: string;
   provider: mongoose.Types.ObjectId;
-  charity?: mongoose.Types.ObjectId;
+  charity?: mongoose.Types.ObjectId;  
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
   createdAt: Date;
 }
 
@@ -55,21 +61,25 @@ const FoodSchema = new mongoose.Schema<FoodDocument>({
   status: { type: String, enum: ['available', 'pending', 'picked_up'], default: 'available' },
   pickupLocation: { type: String, required: true },
   description: { type: String, required: true },
-  provider: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', // Correct reference
-    required: true 
+  provider: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Reference to the User model
+    required: true,
   },
-  charity: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User' // Correct reference
+  charity: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // Reference to the User model
   },
-  createdAt: { type: Date, default: Date.now }
+  coordinates: {
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+  },
+  createdAt: { type: Date, default: Date.now },
 });
 
 export const Food = mongoose.models.Food || mongoose.model<FoodDocument>('Food', FoodSchema);
 
-// Add to existing schemas
+// Chat Schema
 interface ChatDocument extends mongoose.Document {
   foodId: mongoose.Types.ObjectId;
   charityId: mongoose.Types.ObjectId;
@@ -87,7 +97,7 @@ interface MessageDocument extends mongoose.Document {
 const MessageSchema = new mongoose.Schema<MessageDocument>({
   sender: { type: String, enum: ['charity', 'provider'], required: true },
   text: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
 });
 
 const ChatSchema = new mongoose.Schema<ChatDocument>({
@@ -95,19 +105,20 @@ const ChatSchema = new mongoose.Schema<ChatDocument>({
   charityId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   messages: [MessageSchema],
-  status: { type: String, enum: ['pending', 'confirmed', 'completed'], default: 'pending' }
+  status: { type: String, enum: ['pending', 'confirmed', 'completed'], default: 'pending' },
 });
 
 export const Chat = mongoose.models.Chat || mongoose.model<ChatDocument>('Chat', ChatSchema);
 
+// Connect to MongoDB
 export const connectDB = async () => {
   try {
     await mongoose.connect(MONGODB_URI, {
       serverSelectionTimeoutMS: 30000, // 30 seconds timeout
-      socketTimeoutMS: 45000, 
+      socketTimeoutMS: 45000,
       maxPoolSize: 10,
       retryWrites: true,
-      w: 'majority'
+      w: 'majority',
     });
     console.log('MongoDB connected');
     await Chat.collection.createIndex({ providerId: 1, charityId: 1, updatedAt: -1 });

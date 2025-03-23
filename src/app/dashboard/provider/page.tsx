@@ -33,6 +33,10 @@ type Food = {
   pickupLocation: string;
   description: string;
   imageUrl: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  }; // Added coordinates field
 };
 
 export default function ProviderDashboard() {
@@ -45,11 +49,12 @@ export default function ProviderDashboard() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false); // Loading state
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false); // Success state
+  const [error, setError] = useState<string | null>(null); // Added error state
 
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`; // Added API key
       script.async = true;
       script.onload = initializeMap;
       document.body.appendChild(script);
@@ -133,6 +138,22 @@ export default function ProviderDashboard() {
     setExpanded(expanded === section ? null : section);
   };
 
+  const geocodeAddress = async (address: string) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.status !== "OK") throw new Error("Failed to geocode address");
+      return data.results[0].geometry.location;
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true); // Start loading
@@ -157,6 +178,9 @@ export default function ProviderDashboard() {
       });
       if (!uploadRes.ok) throw new Error("Failed to upload image");
       const { imageUrl } = await uploadRes.json();
+
+      const pickupLocation = formData.get("pickupLocation") as string;
+      const coordinates = await geocodeAddress(pickupLocation); // Added geocoding
   
       const foodData = {
         foodName: formData.get("foodName"),
@@ -166,6 +190,7 @@ export default function ProviderDashboard() {
         pickupLocation: formData.get("pickupLocation"),
         description: formData.get("description"),
         imageUrl: imageUrl,
+        coordinates,
       };
   
       const res = await fetch("/api/food", {
