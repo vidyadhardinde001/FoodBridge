@@ -65,7 +65,7 @@ export default function ProviderDashboard() {
     const fetchFoods = async () => {
       try {
         const res = await fetch("/api/food?provider=true", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (!res.ok) throw new Error("Failed to fetch foods");
         const data = await res.json();
@@ -80,8 +80,8 @@ export default function ProviderDashboard() {
         const res = await fetch("/api/chat", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "X-User-Role": "provider"
-          }
+            "X-User-Role": "provider",
+          },
         });
         if (!res.ok) throw new Error("Failed to fetch chats");
         const data = await res.json();
@@ -107,7 +107,7 @@ export default function ProviderDashboard() {
 
     // Listen for new food listings
     socket?.on("new-food-added", (newFood: Food) => {
-      setFoods(prev => [newFood, ...prev]);
+      setFoods((prev) => [newFood, ...prev]);
     });
 
     return () => {
@@ -157,20 +157,20 @@ export default function ProviderDashboard() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true); // Start loading
-  
+
     const formData = new FormData(e.currentTarget);
     const imageFile = formData.get("foodImage");
-  
+
     // Check if imageFile is null or undefined
     if (!imageFile) {
       console.error("No image file provided");
       setIsLoading(false); // Stop loading
       return; // Exit the function early if no file is provided
     }
-  
+
     const uploadFormData = new FormData();
     uploadFormData.append("file", imageFile); // Now imageFile is guaranteed to be a valid Blob or string
-  
+
     try {
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
@@ -181,7 +181,7 @@ export default function ProviderDashboard() {
 
       const pickupLocation = formData.get("pickupLocation") as string;
       const coordinates = await geocodeAddress(pickupLocation); // Added geocoding
-  
+
       const foodData = {
         foodName: formData.get("foodName"),
         foodCategory: formData.get("foodCategory"),
@@ -192,7 +192,7 @@ export default function ProviderDashboard() {
         imageUrl: imageUrl,
         coordinates,
       };
-  
+
       const res = await fetch("/api/food", {
         method: "POST",
         headers: {
@@ -201,12 +201,12 @@ export default function ProviderDashboard() {
         },
         body: JSON.stringify(foodData),
       });
-  
+
       if (!res.ok) throw new Error("Failed to submit food data");
       const newFood = await res.json();
       setFoods([newFood, ...foods]);
       setExpanded(null);
-  
+
       // Show success message
       setIsSubmitted(true);
       setTimeout(() => setIsSubmitted(false), 1500); // Hide after 3 seconds
@@ -241,9 +241,7 @@ export default function ProviderDashboard() {
           Add Surplus Food ➕
         </button>
         <Link href="/chat">
-          <button
-            className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition"
-          >
+          <button className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition">
             <MessageCircle className="w-6 h-6 text-blue-600" />
             Messages
           </button>
@@ -252,10 +250,14 @@ export default function ProviderDashboard() {
 
       {expanded === "addFood" && (
         <section className="p-6 bg-white shadow-lg rounded-lg">
-          <h3 className="text-xl font-semibold mb-4 text-gray-800">Add Surplus Food</h3>
+          <h3 className="text-xl font-semibold mb-4 text-gray-800">
+            Add Surplus Food
+          </h3>
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Food Name</label>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Food Name
+              </label>
               <input
                 type="text"
                 name="foodName"
@@ -266,7 +268,9 @@ export default function ProviderDashboard() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Description</label>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Description
+              </label>
               <textarea
                 name="description"
                 placeholder="Enter food description"
@@ -276,7 +280,9 @@ export default function ProviderDashboard() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Select Food Category</label>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Select Food Category
+              </label>
               <select
                 name="foodCategory"
                 className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
@@ -292,7 +298,9 @@ export default function ProviderDashboard() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Food Type</label>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Food Type
+              </label>
               <select
                 name="foodType"
                 className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
@@ -304,7 +312,9 @@ export default function ProviderDashboard() {
               </select>
             </div>
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Upload Food Image</label>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Upload Food Image
+              </label>
               <input
                 type="file"
                 name="foodImage"
@@ -315,7 +325,24 @@ export default function ProviderDashboard() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Amount (kg)</label>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Food Condition
+              </label>
+              <select
+                name="foodCondition"
+                className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+                required
+              >
+                <option value="">Select condition...</option>
+                <option value="used">Used</option>
+                <option value="unused">Unused</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Amount (kg)
+              </label>
               <input
                 type="number"
                 name="amount"
@@ -326,7 +353,9 @@ export default function ProviderDashboard() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Pickup Location</label>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Pickup Location
+              </label>
               <input
                 type="text"
                 name="pickupLocation"
@@ -337,8 +366,13 @@ export default function ProviderDashboard() {
             </div>
 
             <div>
-              <label className="block text-gray-700 text-sm font-bold mb-2">Location Map</label>
-              <div id="map" className="w-full h-64 border rounded-lg shadow-md"></div>
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Location Map
+              </label>
+              <div
+                id="map"
+                className="w-full h-64 border rounded-lg shadow-md"
+              ></div>
             </div>
 
             <button
@@ -354,15 +388,18 @@ export default function ProviderDashboard() {
             </button>
           </form>
         </section>
-
-
       )}
       {isSubmitted && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-8 rounded-lg shadow-lg text-center animate-bounce">
-            <div className="text-4xl mb-4">🎉</div> {/* Emoji for celebration */}
-            <h2 className="text-2xl font-bold text-green-600 mb-2">Submitted Successfully!</h2>
-            <p className="text-gray-600">Your food donation has been recorded.</p>
+            <div className="text-4xl mb-4">🎉</div>{" "}
+            {/* Emoji for celebration */}
+            <h2 className="text-2xl font-bold text-green-600 mb-2">
+              Submitted Successfully!
+            </h2>
+            <p className="text-gray-600">
+              Your food donation has been recorded.
+            </p>
           </div>
         </div>
       )}
