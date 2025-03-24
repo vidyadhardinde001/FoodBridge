@@ -146,7 +146,9 @@ export default function ProviderDashboard() {
         )}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
-      if (data.status !== "OK") throw new Error("Failed to geocode address");
+      if (data.status !== 'OK' || !data.results[0]) {
+        throw new Error(data.error_message || 'No results found');
+      }
       return data.results[0].geometry.location;
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -182,6 +184,10 @@ export default function ProviderDashboard() {
       const pickupLocation = formData.get("pickupLocation") as string;
       const coordinates = await geocodeAddress(pickupLocation); // Added geocoding
 
+      if (!pickupLocation || pickupLocation.trim().length < 5) {
+        throw new Error("Please enter a valid address");
+      }
+
       const foodData = {
         foodName: formData.get("foodName"),
         foodCategory: formData.get("foodCategory"),
@@ -191,6 +197,7 @@ export default function ProviderDashboard() {
         description: formData.get("description"),
         imageUrl: imageUrl,
         coordinates,
+        foodCondition: formData.get("foodCondition"),
       };
 
       const res = await fetch("/api/food", {
@@ -307,8 +314,8 @@ export default function ProviderDashboard() {
                 required
               >
                 <option value="">Select type...</option>
-                <option value="Vegetarian">Vegetarian</option>
-                <option value="Non-Vegetarian">Non-Vegetarian</option>
+                <option value="veg">Vegetarian</option>
+                <option value="nonveg">Non-Vegetarian</option>
               </select>
             </div>
             <div>

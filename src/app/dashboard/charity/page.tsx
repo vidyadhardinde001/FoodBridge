@@ -1,3 +1,5 @@
+// /dashboard/charity/page.tsx
+
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -24,6 +26,7 @@ interface Food {
   pickupLocation: string;
   description: string;
   isVeg: boolean;
+  condition: 'used' | 'unused';
   imageUrl?: string;
   status: string;
   reviews: {
@@ -41,6 +44,7 @@ export default function CharityDashboard() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [vegFilter, setVegFilter] = useState<boolean | null>(null);
+  const [conditionFilter, setConditionFilter] = useState<string | null>(null);
   const [foodCategoryFilter, setFoodCategoryFilter] = useState<string | null>(null);
   const [foods, setFoods] = useState<Food[]>([]);
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
@@ -171,14 +175,16 @@ export default function CharityDashboard() {
         food.pickupLocation.toLowerCase().includes(searchQuery.toLowerCase());
       
       const vegMatch = vegFilter === null || food.isVeg === vegFilter;
+      const conditionMatch = conditionFilter === null || 
+                      food.condition?.toLowerCase() === conditionFilter.toLowerCase();
       const categoryMatch = foodCategoryFilter === null || 
                          food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
       
-      return searchMatch && vegMatch && categoryMatch;
+      return searchMatch && vegMatch && categoryMatch && conditionMatch;
     });
     
     setFilteredFoods(filtered);
-  }, [foods, searchQuery, vegFilter, foodCategoryFilter]);
+  }, [foods, searchQuery, vegFilter, foodCategoryFilter,conditionFilter]);
 
   const handleRequest = async (foodId: string) => {
     try {
@@ -253,6 +259,20 @@ export default function CharityDashboard() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Food Condition
+              </label>
+              <select
+                className="w-full p-2 border rounded-lg"
+                value={conditionFilter || "all"}
+                onChange={(e) => setConditionFilter(e.target.value === "all" ? null : e.target.value)}
+              >
+                <option value="all">All Conditions</option>
+                <option value="used">Used</option>
+                <option value="unused">Unused</option>
+              </select>
+            </div>
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Food Type

@@ -22,7 +22,7 @@ export async function GET() {
 // POST endpoint to create a new food listing
 export async function POST(req: Request) {
   await connectDB();
-  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl } = await req.json();
+  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl,foodType,foodCondition } = await req.json();
   const token = req.headers.get('authorization')?.split(' ')[1];
 
   if (!token) {
@@ -49,6 +49,8 @@ export async function POST(req: Request) {
     // Extract latitude and longitude from the geocoding response
     const { lat, lng } = geocodeResponse.data.results[0].geometry.location;
 
+    const isVeg = foodType === 'veg';
+
     // Create the food listing with the geocoded coordinates
     const food = await Food.create({
       foodName,
@@ -59,6 +61,8 @@ export async function POST(req: Request) {
       imageUrl,
       provider: decoded.id,
       status: 'available',
+      isVeg,
+      condition: foodCondition,
       coordinates: { lat, lng }, // Save the coordinates
     });
 

@@ -52,6 +52,8 @@ interface FoodDocument extends mongoose.Document {
   status: 'available' | 'pending' | 'picked_up';
   pickupLocation: string;
   description: string;
+  isVeg: boolean;
+  condition: 'used' | 'unused';
   provider: mongoose.Types.ObjectId;
   charity?: mongoose.Types.ObjectId;  
   coordinates: {
@@ -69,6 +71,12 @@ const FoodSchema = new mongoose.Schema<FoodDocument>({
   status: { type: String, enum: ['available', 'pending', 'picked_up'], default: 'available' },
   pickupLocation: { type: String, required: true },
   description: { type: String, required: true },
+  isVeg: { type: Boolean, required: true },
+  condition: { 
+    type: String, 
+    enum: ['used', 'unused'],
+    required: true 
+  },
   provider: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User', // Reference to the User model
