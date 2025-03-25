@@ -1,10 +1,11 @@
 // api/food/route.ts
 
-import { connectDB, Food, User } from '@/lib/db';
+import { connectDB, Food, User,Notification } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { sendVerificationEmail } from '@/lib/email';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import { sendNotificationEmail } from '@/lib/email';
 
 // GET endpoint to fetch available food listings
 export async function GET() {
@@ -22,7 +23,7 @@ export async function GET() {
 // POST endpoint to create a new food listing
 export async function POST(req: Request) {
   await connectDB();
-  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl,foodType,foodCondition } = await req.json();
+  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl,foodType,foodCondition, coordinates } = await req.json();
   const token = req.headers.get('authorization')?.split(' ')[1];
 
   if (!token) {
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
   try {
     // Verify the JWT token
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const provider = await User.findById(decoded.id);
 
     // Geocode the pickup location using Google Maps Geocoding API
     const geocodeResponse = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
@@ -65,6 +67,54 @@ export async function POST(req: Request) {
       condition: foodCondition,
       coordinates: { lat, lng }, // Save the coordinates
     });
+
+     // Find charities within 10km using manual distance calculation
+     const allCharities = await User.find({ role: 'charity' });
+    
+     const nearbyCharities = allCharities.filter(charity => {
+       if (!charity.coordinates || !charity.coordinates.lat || !charity.coordinates.lng) return false;
+       
+       const distance = calculateDistance(
+         coordinates.lat,
+         coordinates.lng,
+         charity.coordinates.lat,
+         charity.coordinates.lng
+       );
+       
+       return distance <= 10; // 10 km
+     });
+ 
+     // Create notifications
+     const notificationPromises = nearbyCharities.map(async charityUser => {
+      try {
+        // 1. Create database notification
+        await Notification.create({
+          charity: charityUser._id,
+          food: food._id,
+          message: `${provider.name} has ${foodCondition} ${foodName} (${quantity}kg) available near ${pickupLocation}`
+        });
+
+        // 2. Send email notification
+        if (charityUser.email) {
+          await sendNotificationEmail(
+            charityUser.email,
+            provider.name,
+            {
+              name: foodName,
+              quantity: quantity.toString(),
+              condition: foodCondition,
+              category: foodCategory
+            },
+            `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/charity`
+          );
+        }
+
+        console.log(`Notification sent to charity ${charityUser._id}`);
+      } catch (error) {
+        console.error(`Failed to notify charity ${charityUser._id}:`, error);
+      }
+    });
+    await Promise.all(notificationPromises);
 
     return NextResponse.json(food);
   } catch (error) {
@@ -104,4 +154,21 @@ export async function PATCH(req: Request) {
     console.error(error);
     return NextResponse.json({ error: 'Failed to update status' }, { status: 500 });
   }
+}
+
+// Helper function to calculate distance between two coordinates in km
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  return R * c; // Distance in km
+}
+
+function deg2rad(deg: number) {
+  return deg * (Math.PI/180);
 }

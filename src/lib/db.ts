@@ -29,7 +29,15 @@ interface UserDocument extends mongoose.Document {
 
 const UserSchema = new mongoose.Schema<UserDocument>({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    validate: {
+      validator: (v: string) => /\S+@\S+\.\S+/.test(v),
+      message: (props: any) => `${props.value} is not a valid email!`
+    }
+  },
   password: { type: String, required: true },
   phone: { type: String, required: true },
   address: { type: String, required: true },
@@ -40,6 +48,17 @@ const UserSchema = new mongoose.Schema<UserDocument>({
   role: { type: String, enum: ['provider', 'charity'], required: true },
   organizationName: { type: String },
 });
+
+UserSchema.virtual('location').get(function() {
+  return {
+    type: 'Point',
+    coordinates: [this.coordinates.lng, this.coordinates.lat]
+  };
+});
+
+// Enable virtuals in queries
+UserSchema.set('toJSON', { virtuals: true });
+UserSchema.set('toObject', { virtuals: true });
 
 export const User = mongoose.models.User || mongoose.model<UserDocument>('User', UserSchema);
 
@@ -126,6 +145,36 @@ const ChatSchema = new mongoose.Schema<ChatDocument>({
 
 export const Chat = mongoose.models.Chat || mongoose.model<ChatDocument>('Chat', ChatSchema);
 
+// Add to lib/db.ts
+
+// Notification Schema
+interface NotificationDocument extends mongoose.Document {
+  charity: mongoose.Types.ObjectId;
+  message: string;
+  food: mongoose.Types.ObjectId;
+  isRead: boolean;
+  createdAt: Date;
+}
+
+const NotificationSchema = new mongoose.Schema<NotificationDocument>({
+  charity: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  message: { type: String, required: true },
+  food: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Food',
+    required: true
+  },
+  isRead: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+export const Notification = mongoose.models.Notification || 
+  mongoose.model<NotificationDocument>('Notification', NotificationSchema);
+
 // Connect to MongoDB
 export const connectDB = async () => {
   try {
@@ -136,6 +185,7 @@ export const connectDB = async () => {
       retryWrites: true,
       w: 'majority',
     });
+    await User.collection.createIndex({ location: "2dsphere" });
     console.log('MongoDB connected');
     await Chat.collection.createIndex({ providerId: 1, charityId: 1, updatedAt: -1 });
   } catch (error) {

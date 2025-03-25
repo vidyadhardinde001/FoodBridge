@@ -11,6 +11,7 @@ import {
   Marker,
   useJsApiLoader,
 } from "@react-google-maps/api";
+import { BellIcon } from "@/app/components/BellIcon";
 
 interface Food {
   _id: string;
@@ -51,6 +52,8 @@ export default function CharityDashboard() {
   const [expandedFood, setExpandedFood] = useState<string | null>(null);
   const [charityLocation, setCharityLocation] = useState({ lat: 0, lng: 0 });
   const [distances, setDistances] = useState<{ [key: string]: string }>({});
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const socket = getSocket();
 
   const loadDistance = async (
@@ -220,6 +223,26 @@ export default function CharityDashboard() {
     router.push(`/review?foodId=${foodId}`);
   };
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch("/api/notifications", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setNotifications(data);
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+    
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, []);
+
   if (!isLoaded) return <p>Loading Map...</p>;
 
   return (
@@ -230,8 +253,20 @@ export default function CharityDashboard() {
       <div className="absolute inset-0 bg-black bg-opacity-0"></div>
 
       <div className="relative z-10">
-        <header className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-white">Welcome!</h1>
+      <header className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-white">Welcome!</h1>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2 hover:bg-white/10 rounded-full"
+          >
+            <BellIcon className="w-6 h-6 text-white" />
+            {notifications.filter(n => !n.isRead).length > 0 && (
+              <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+                {notifications.filter(n => !n.isRead).length}
+              </span>
+            )}
+          </button>
           <button
             onClick={() => {
               localStorage.removeItem("token");
@@ -242,7 +277,31 @@ export default function CharityDashboard() {
           >
             Logout
           </button>
-        </header>
+        </div>
+      </header>
+
+      {showNotifications && (
+  <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
+    <div className="p-4">
+      <h3 className="text-lg font-semibold mb-2">Notifications</h3>
+      {notifications.length === 0 ? (
+        <p className="text-gray-500">No new notifications</p>
+      ) : (
+        notifications.map((notification) => (
+          <div 
+            key={notification._id}
+            className={`p-3 mb-2 rounded-lg ${!notification.isRead ? 'bg-blue-50' : 'bg-gray-100'}`}
+          >
+            <p className="text-sm">{notification.message}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {new Date(notification.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
 
         <div className="bg-gray-200 p-4 rounded-lg shadow-md mb-6">
           <div className="mb-4">
