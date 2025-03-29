@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSocket } from "@/lib/socket-client";
 import { connectSocket } from "@/lib/socket-client";
+import LoadingButton from "@/app/components/LoadingButton";
 import {
   GoogleMap,
   LoadScript,
@@ -171,23 +172,23 @@ export default function CharityDashboard() {
   useEffect(() => {
     const filtered = foods.filter((food) => {
       if (food.status !== "available" || !food.provider) return false;
-      
+
       // Combined search for both food name and location
-      const searchMatch = searchQuery === "" || 
+      const searchMatch = searchQuery === "" ||
         food.foodName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         food.pickupLocation.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const vegMatch = vegFilter === null || food.isVeg === vegFilter;
-      const conditionMatch = conditionFilter === null || 
-                      food.condition?.toLowerCase() === conditionFilter.toLowerCase();
-      const categoryMatch = foodCategoryFilter === null || 
-                         food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
-      
+      const conditionMatch = conditionFilter === null ||
+        food.condition?.toLowerCase() === conditionFilter.toLowerCase();
+      const categoryMatch = foodCategoryFilter === null ||
+        food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
+
       return searchMatch && vegMatch && categoryMatch && conditionMatch;
     });
-    
+
     setFilteredFoods(filtered);
-  }, [foods, searchQuery, vegFilter, foodCategoryFilter,conditionFilter]);
+  }, [foods, searchQuery, vegFilter, foodCategoryFilter, conditionFilter]);
 
   const handleRequest = async (foodId: string) => {
     try {
@@ -214,29 +215,99 @@ export default function CharityDashboard() {
   };
 
   const handleRequestConfirmation = async (foodId: string) => {
-    if (confirm("Are you sure you want to request this food?")) {
-      try {
-        const res = await fetch("/api/request", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}` 
-          },
-          body: JSON.stringify({
-            foodId,
-            charityId: localStorage.getItem("userId")
-          })
-        });
+    // Create a modal dialog element
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
     
-        if (res.ok) {
-          alert("Request sent successfully!");
-        } else {
-          const errorData = await res.json();
-          console.error("Request failed:", errorData);
-        }
-      } catch (error) {
-        console.error("Request failed:", error);
+    // Modal content with loading state support
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Confirm Request</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to request this food item?</p>
+        
+        <div class="flex justify-end space-x-3">
+          <button id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+            Cancel
+          </button>
+          <button id="confirm-btn" class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition flex items-center justify-center min-w-24">
+            Confirm
+          </button>
+        </div>
+      </div>
+    `;
+  
+    // Add to DOM
+    document.body.appendChild(modal);
+    
+    // Get references to buttons
+    const confirmBtn = modal.querySelector('#confirm-btn') as HTMLButtonElement;
+    const cancelBtn = modal.querySelector('#cancel-btn') as HTMLButtonElement;
+  
+    // Wrap in Promise to await user action
+    const userConfirmed = await new Promise<boolean>((resolve) => {
+      confirmBtn.onclick = () => resolve(true);
+      cancelBtn.onclick = () => {
+        modal.remove();
+        resolve(false);
+      };
+    });
+  
+    if (!userConfirmed) return;
+  
+    // User confirmed - show loading state
+    confirmBtn.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Processing...
+    `;
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+  
+    try {
+      const res = await fetch("/api/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          foodId,
+          charityId: localStorage.getItem("userId")
+        })
+      });
+  
+      if (res.ok) {
+        // Create and show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+        successDiv.textContent = 'Request sent successfully!';
+        document.body.appendChild(successDiv);
+        
+        // Remove after delay
+        setTimeout(() => {
+          successDiv.remove();
+          modal.remove();
+        }, 3000);
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Request failed');
       }
+    } catch (error) {
+      // Show error message
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+      errorDiv.textContent = error instanceof Error ? error.message : 'Request failed';
+      document.body.appendChild(errorDiv);
+      
+      // Remove after delay
+      setTimeout(() => {
+        errorDiv.remove();
+        modal.remove();
+      }, 3000);
+      
+      console.error("Request failed:", error);
     }
   };
 
@@ -264,7 +335,7 @@ export default function CharityDashboard() {
         console.error("Error fetching notifications:", error);
       }
     };
-    
+
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
     return () => clearInterval(interval);
@@ -280,55 +351,55 @@ export default function CharityDashboard() {
       <div className="absolute inset-0 bg-black bg-opacity-0"></div>
 
       <div className="relative z-10">
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-white">Welcome!</h1>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 hover:bg-white/10 rounded-full"
-          >
-            <BellIcon className="w-6 h-6 text-white" />
-            {notifications.filter(n => !n.isRead).length > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-                {notifications.filter(n => !n.isRead).length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("role");
-              window.location.href = "/login";
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      {showNotifications && (
-  <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Notifications</h3>
-      {notifications.length === 0 ? (
-        <p className="text-gray-500">No new notifications</p>
-      ) : (
-        notifications.map((notification) => (
-          <div 
-            key={notification._id}
-            className={`p-3 mb-2 rounded-lg ${!notification.isRead ? 'bg-blue-50' : 'bg-gray-100'}`}
-          >
-            <p className="text-sm">{notification.message}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(notification.createdAt).toLocaleDateString()}
-            </p>
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white">Welcome!</h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 hover:bg-white/10 rounded-full"
+            >
+              <BellIcon className="w-6 h-6 text-white" />
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+                  {notifications.filter(n => !n.isRead).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("role");
+                window.location.href = "/login";
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            >
+              Logout
+            </button>
           </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
+        </header>
+
+        {showNotifications && (
+          <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold mb-2">Notifications</h3>
+              {notifications.length === 0 ? (
+                <p className="text-gray-500">No new notifications</p>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`p-3 mb-2 rounded-lg ${!notification.isRead ? 'bg-blue-50' : 'bg-gray-100'}`}
+                  >
+                    <p className="text-sm">{notification.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(notification.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="bg-gray-200 p-4 rounded-lg shadow-md mb-6">
           <div className="mb-4">
@@ -343,7 +414,7 @@ export default function CharityDashboard() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
@@ -378,7 +449,7 @@ export default function CharityDashboard() {
                 <option value="nonveg">Non-Vegetarian</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Food Category
@@ -424,7 +495,7 @@ export default function CharityDashboard() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {filteredFoods.map((food) => (
                 <div
                   key={food._id}
@@ -432,11 +503,10 @@ export default function CharityDashboard() {
                 >
                   <div className="absolute top-2 right-2 flex items-center gap-2">
                     <span
-                      className={`px-2 py-1 text-sm font-semibold rounded ${
-                        food.isVeg
-                          ? "bg-green-500 text-white"
-                          : "bg-red-500 text-white"
-                      }`}
+                      className={`px-2 py-1 text-sm font-semibold rounded ${food.isVeg
+                        ? "bg-green-500 text-white"
+                        : "bg-red-500 text-white"
+                        }`}
                     >
                       {food.isVeg ? "Veg" : "Non-Veg"}
                     </span>
@@ -449,7 +519,7 @@ export default function CharityDashboard() {
 
                   <h3 className="text-lg font-semibold">{food.foodName}</h3>
 
-                  <div className="w-full h-[300px] bg-white rounded-lg overflow-hidden flex items-center justify-center">
+                  <div className="w-full h-[200px] bg-white rounded-lg overflow-hidden flex items-center justify-center">
                     {food.imageUrl ? (
                       <img
                         src={`/api/proxy-image?url=${encodeURIComponent(
@@ -470,7 +540,7 @@ export default function CharityDashboard() {
                     )}
                   </div>
 
-                  <p className="text-gray-600 font-semibold">Quantity:</p>
+                  <p className="text-gray-600 font-semibold pt-2">Quantity(In kg):</p>
                   <p className="text-green-600 text-2xl font-bold">
                     {food.quantity}
                   </p>
@@ -565,18 +635,19 @@ export default function CharityDashboard() {
                         Open in Google Maps
                       </button>
 
-                      <button
+                      <LoadingButton
                         onClick={() => handleRequest(food._id)}
-                        className="mt-4 bg-teal-700 text-white px-4 py-2 rounded-lg w-full hover:bg-teal-800 transition"
+                        className="mt-4 bg-teal-700 text-white px-4 py-2 rounded-lg w-full hover:bg-teal-800"
+                        loadingText="Contacting..."
                       >
                         Contact
-                      </button>
-                      <button
+                      </LoadingButton>
+                      <LoadingButton
                         onClick={() => handleRequestConfirmation(food._id)}
                         className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg w-full hover:bg-purple-700 transition"
                       >
                         Request
-                      </button>
+                      </LoadingButton>
                     </div>
                   )}
                 </div>

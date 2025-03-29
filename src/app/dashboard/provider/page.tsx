@@ -7,6 +7,7 @@ import Link from "next/link"; // If using Next.js
 import { getSocket } from "@/lib/socket-client";
 import { MessageCircle } from "lucide-react"; // Import the MessageCircle icon
 
+
 declare global {
   interface Window {
     google: any;
@@ -261,7 +262,7 @@ export default function ProviderDashboard() {
       try {
         await fetch(`/api/requests/${requestId}/reject`, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${localStorage.getItem("token")}`
           },
@@ -275,58 +276,70 @@ export default function ProviderDashboard() {
   };
 
   return (
-    <>
+    <div
+      className="min-h-screen items-center justify-center p-6 relative"
+      style={{
+        backgroundImage: "url('/provider.png')", // Replace with your image path
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Provider Dashboard</h1>
-        
-        <button
-          onClick={() => {
-            localStorage.removeItem("token");
-            localStorage.removeItem("role");
-            window.location.href = "/login";
-          }}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
-      </header>
-      <section className="mt-8 p-6 bg-white shadow-lg rounded-lg">
-          <h3 className="text-xl font-semibold mb-4">Pending Requests</h3>
-          {requests.map(request => (
-            <div key={request._id} className="p-4 mb-4 border rounded-lg">
-              <p>{request.message}</p>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => handleConfirm(request._id)}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  Confirm
-                </button>
-                <button
-                  onClick={() => handleReject(request._id)}
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          ))}
-        </section>
+        <h1 className="text-3xl font-semibold text-white">Welcome!</h1>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <Link href="/chat">
+            <button className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition">
+              <MessageCircle className="w-6 h-6 text-blue-600" />
+            </button>
+          </Link>
+
+          <button
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("role");
+              window.location.href = "/login";
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+
+      <div className="grid grid-cols-3 gap-4 mt-2">
         <button
           onClick={() => toggleSection("addFood")}
           className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition"
         >
           Add Surplus Food ➕
         </button>
-        <Link href="/chat">
-          <button className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition">
-            <MessageCircle className="w-6 h-6 text-blue-600" />
-            Messages
-          </button>
-        </Link>
       </div>
+
+      <section className="mt-4 mb-4 p-6 bg-white shadow-lg rounded-lg">
+        <h3 className="text-xl font-medium">Pending Requests</h3>
+        {requests.map(request => (
+          <div key={request._id} className="p-4 mb-4 border rounded-lg">
+            <p>{request.message}</p>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => handleConfirm(request._id)}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={() => handleReject(request._id)}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Reject
+              </button>
+            </div>
+          </div>
+        ))}
+      </section>
 
       {expanded === "addFood" && (
         <section className="p-6 bg-white shadow-lg rounded-lg">
@@ -483,6 +496,6 @@ export default function ProviderDashboard() {
           </div>
         </div>
       )}
-    </>
+     </div>
   );
 }
