@@ -1,5 +1,5 @@
 // api/notifications/route.ts
-import { connectDB, Notification } from '@/lib/db';
+import { connectDB, Notification, User } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import jwt  from 'jsonwebtoken';
 
@@ -13,13 +13,27 @@ export async function GET(req: Request) {
   
     try {
       const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+      const user = await User.findById(decoded.id);
+
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+  
+      let query = {};
+      if (user.role === 'charity') {
+        query = { charity: user._id, type: { $ne: 'request' } };
+      } else if (user.role === 'provider') {
+        query = { provider: user._id };
+      }
       
       // Debug: Log the charity ID being queried
       console.log('Fetching notifications for charity:', decoded.id);
       
-      const notifications = await Notification.find({ charity: decoded.id })
+      const notifications = await Notification.find(query)
         .sort({ createdAt: -1 })
         .populate('food', 'foodName quantity condition')
+        .populate('charity', 'name')
+        .populate('provider', 'name')
         .limit(10);
   
       // Debug: Log the notifications found

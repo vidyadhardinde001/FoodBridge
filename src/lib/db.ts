@@ -145,22 +145,28 @@ const ChatSchema = new mongoose.Schema<ChatDocument>({
 
 export const Chat = mongoose.models.Chat || mongoose.model<ChatDocument>('Chat', ChatSchema);
 
-// Add to lib/db.ts
 
 // Notification Schema
 interface NotificationDocument extends mongoose.Document {
-  charity: mongoose.Types.ObjectId;
+  charity?: mongoose.Types.ObjectId;  // Changed to optional
+  provider?: mongoose.Types.ObjectId;
   message: string;
   food: mongoose.Types.ObjectId;
   isRead: boolean;
   createdAt: Date;
+  type: 'request' | 'general';
+  status: 'pending' | 'confirmed' | 'rejected';
+  reason?: string;
 }
 
 const NotificationSchema = new mongoose.Schema<NotificationDocument>({
   charity: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'User'
+  },
+  provider: {  // Added provider field
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   message: { type: String, required: true },
   food: {
@@ -169,7 +175,18 @@ const NotificationSchema = new mongoose.Schema<NotificationDocument>({
     required: true
   },
   isRead: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  type: { 
+    type: String, 
+    enum: ['request', 'general'], 
+    required: true 
+  },
+  status: { 
+    type: String, 
+    enum: ['pending', 'confirmed', 'rejected'], 
+    default: 'pending' 
+  },
+  reason: { type: String },
 });
 
 export const Notification = mongoose.models.Notification || 

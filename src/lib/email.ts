@@ -11,29 +11,90 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-export const sendVerificationEmail = async (providerEmail: string, foodId: string, charityId: string) => {
-  const token = jwt.sign({  foodId,charityId  }, process.env.JWT_SECRET!, { expiresIn: '1h' });
-  const verificationLink = `${process.env.NEXTAUTH_URL}/verify/${foodId}?token=${token}`;
+export const sendVerificationEmail = async (
+  providerEmail: string,
+  foodDetails: {
+    foodId: string,
+    charityId: string,
+    foodName: string;
+    quantity: string;
+    description: string;
+  },
+  charityName: string
+) => {
+  const token = jwt.sign({ foodId: foodDetails.foodId, charityId: foodDetails.charityId }, process.env.JWT_SECRET!, { expiresIn: '1h' });
+  const dashboardLink = `${process.env.NEXTAUTH_URL}/dashboard/provider`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: providerEmail,
-    subject: 'Food Pickup Request',
-    html: `<p>A charity has requested your food donation. <a href="${verificationLink}">Click here to verify</a></p>`
+    subject: 'New Food Request',
+    html: `<p>${charityName} wants to request your ${foodDetails.foodName}. 
+       <a href="${process.env.NEXTAUTH_URL}/dashboard/provider">Click here to review</a>
+       <br/><br/>
+       Food Details: ${foodDetails.description}
+       <br/>
+       Quantity: ${foodDetails.quantity}kg</p>`
   };
 
   await transporter.sendMail(mailOptions);
 };
 
 export const sendConfirmationEmail = async (
-  charityEmail: string, 
-  foodDetails: { foodName: string,pickupLocation: string }  // Fix parameter type
+  charityEmail: string,
+  foodDetails: {
+    foodName: string;
+    pickupLocation: string;
+  }
 ) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: `"FoodBridge" <${process.env.EMAIL_USER}>`,
     to: charityEmail,
-    subject: 'Pickup Confirmed',
-    html: `<p>Your pickup for ${foodDetails.foodName} has been confirmed!</p>`
+    subject: 'Request Confirmed',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2d3748;">Request Confirmed! ✅</h2>
+        <p style="font-size: 16px;">
+          Your request for <strong>${foodDetails.foodName}</strong> has been confirmed!
+        </p>
+        <p style="font-size: 16px;">
+          Pickup Location: ${foodDetails.pickupLocation}
+        </p>
+        <p style="font-size: 14px; color: #718096; margin-top: 20px;">
+          You can now coordinate the pickup with the provider.
+        </p>
+      </div>
+    `
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+export const sendRejectionEmail = async (
+  charityEmail: string,
+  foodDetails: {
+    foodName: string;
+    reason: string;
+  }
+) => {
+  const mailOptions = {
+    from: `"FoodBridge" <${process.env.EMAIL_USER}>`,
+    to: charityEmail,
+    subject: 'Request Rejected',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2d3748;">Request Rejected ❌</h2>
+        <p style="font-size: 16px;">
+          Your request for <strong>${foodDetails.foodName}</strong> has been rejected.
+        </p>
+        <p style="font-size: 16px;">
+          Reason: ${foodDetails.reason}
+        </p>
+        <p style="font-size: 14px; color: #718096; margin-top: 20px;">
+          You can browse other available food items in your area.
+        </p>
+      </div>
+    `
   };
 
   await transporter.sendMail(mailOptions);

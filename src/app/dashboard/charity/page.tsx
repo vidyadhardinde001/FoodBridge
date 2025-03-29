@@ -213,6 +213,33 @@ export default function CharityDashboard() {
     }
   };
 
+  const handleRequestConfirmation = async (foodId: string) => {
+    if (confirm("Are you sure you want to request this food?")) {
+      try {
+        const res = await fetch("/api/request", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}` 
+          },
+          body: JSON.stringify({
+            foodId,
+            charityId: localStorage.getItem("userId")
+          })
+        });
+    
+        if (res.ok) {
+          alert("Request sent successfully!");
+        } else {
+          const errorData = await res.json();
+          console.error("Request failed:", errorData);
+        }
+      } catch (error) {
+        console.error("Request failed:", error);
+      }
+    }
+  };
+
   const calculateAverageRating = (reviews: { rating: number }[]) => {
     if (reviews.length === 0) return 0;
     const total = reviews.reduce((sum, review) => sum + review.rating, 0);
@@ -543,6 +570,12 @@ export default function CharityDashboard() {
                         className="mt-4 bg-teal-700 text-white px-4 py-2 rounded-lg w-full hover:bg-teal-800 transition"
                       >
                         Contact
+                      </button>
+                      <button
+                        onClick={() => handleRequestConfirmation(food._id)}
+                        className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg w-full hover:bg-purple-700 transition"
+                      >
+                        Request
                       </button>
                     </div>
                   )}

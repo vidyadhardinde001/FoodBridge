@@ -50,6 +50,22 @@ export default function ProviderDashboard() {
   const [isLoading, setIsLoading] = useState<boolean>(false); // Loading state
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false); // Success state
   const [error, setError] = useState<string | null>(null); // Added error state
+  const [requests, setRequests] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const res = await fetch("/api/requests", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        const data = await res.json();
+        setRequests(data);
+      } catch (error) {
+        console.error("Error fetching requests:", error);
+      }
+    };
+    fetchRequests();
+  }, [socket]);
 
   useEffect(() => {
     if (!window.google) {
@@ -224,10 +240,45 @@ export default function ProviderDashboard() {
     }
   };
 
+  // In provider/page.tsx
+  const handleConfirm = async (requestId: string) => {
+    if (confirm("Are you sure you want to confirm this request?")) {
+      try {
+        await fetch(`/api/requests/${requestId}/confirm`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        setRequests(prev => prev.filter(req => req._id !== requestId));
+      } catch (error) {
+        console.error("Confirmation failed:", error);
+      }
+    }
+  };
+
+  const handleReject = async (requestId: string) => {
+    const reason = prompt("Please enter reason for rejection:");
+    if (reason) {
+      try {
+        await fetch(`/api/requests/${requestId}/reject`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify({ reason })
+        });
+        setRequests(prev => prev.filter(req => req._id !== requestId));
+      } catch (error) {
+        console.error("Rejection failed:", error);
+      }
+    }
+  };
+
   return (
     <>
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Provider Dashboard</h1>
+        
         <button
           onClick={() => {
             localStorage.removeItem("token");
@@ -239,6 +290,28 @@ export default function ProviderDashboard() {
           Logout
         </button>
       </header>
+      <section className="mt-8 p-6 bg-white shadow-lg rounded-lg">
+          <h3 className="text-xl font-semibold mb-4">Pending Requests</h3>
+          {requests.map(request => (
+            <div key={request._id} className="p-4 mb-4 border rounded-lg">
+              <p>{request.message}</p>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => handleConfirm(request._id)}
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => handleReject(request._id)}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <button
