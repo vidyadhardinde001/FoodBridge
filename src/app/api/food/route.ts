@@ -8,11 +8,19 @@ import axios from 'axios';
 import { sendNotificationEmail } from '@/lib/email';
 
 // GET endpoint to fetch available food listings
-export async function GET() {
+export async function GET(req: Request) {
   await connectDB();
+  const { searchParams } = new URL(req.url);
+  const charity = searchParams.get('charity');
+  const status = searchParams.get('status');
   try {
-    const foods = await Food.find({ status: 'available' })
-      .populate('provider', 'name email phone address')
+    const query: any = {};
+    if (charity) query.charity = charity;
+    if (status) query.status = status;
+
+    const foods = await Food.find(query)
+      .populate('provider', 'name email phone address _id')
+      .populate('charity', 'name')
       .sort({ createdAt: -1 });
     return NextResponse.json(foods);
   } catch (error) {

@@ -17,7 +17,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
 
     await Food.findByIdAndUpdate(request.food._id, {
-      status: 'pending' // This will make it disappear from charity view
+      status: 'picked_up', 
+      charity: request.charity._id
     });
 
     // Send confirmation email and notification

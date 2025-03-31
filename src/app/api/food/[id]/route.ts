@@ -30,7 +30,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     // Find the food listing
     const food = await Food.findByIdAndUpdate(
       params.id,
-      { status: 'picked_up' },
+      { status: 'picked_up',
+        charity: decoded.id
+       },
       { new: true }
     )
     .populate('charity', 'email')

@@ -28,10 +28,14 @@ interface UserDocument extends mongoose.Document {
 }
 
 const UserSchema = new mongoose.Schema<UserDocument>({
-  name: { type: String, required: true },
+  name: { 
+    type: String, 
+    required: [true, 'Name is required'],
+    trim: true
+  },
   email: { 
     type: String, 
-    required: true, 
+    required: [true, 'Email is required'],
     unique: true,
     validate: {
       validator: (v: string) => /\S+@\S+\.\S+/.test(v),
@@ -39,8 +43,19 @@ const UserSchema = new mongoose.Schema<UserDocument>({
     }
   },
   password: { type: String, required: true },
-  phone: { type: String, required: true },
-  address: { type: String, required: true },
+  phone: { 
+    type: String, 
+    required: [true, 'Phone number is required'],
+    validate: {
+      validator: (v: string) => /^\d{10}$/.test(v),
+      message: (props: any) => `${props.value} is not a valid phone number!`
+    }
+  },
+  address: { 
+    type: String, 
+    required: [true, 'Address is required'],
+    minlength: [10, 'Address should be at least 10 characters']
+  },
   coordinates: {
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
@@ -191,6 +206,28 @@ const NotificationSchema = new mongoose.Schema<NotificationDocument>({
 
 export const Notification = mongoose.models.Notification || 
   mongoose.model<NotificationDocument>('Notification', NotificationSchema);
+
+  // Add to lib/db.ts
+interface ReviewDocument extends mongoose.Document {
+  providerId: mongoose.Types.ObjectId;
+  charityId: mongoose.Types.ObjectId;
+  foodId: mongoose.Types.ObjectId;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+}
+
+const ReviewSchema = new mongoose.Schema<ReviewDocument>({
+  providerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  charityId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  foodId: { type: mongoose.Schema.Types.ObjectId, ref: 'Food', required: true },
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  comment: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export const Review = mongoose.models.Review || 
+  mongoose.model<ReviewDocument>('Review', ReviewSchema);
 
 // Connect to MongoDB
 export const connectDB = async () => {

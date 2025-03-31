@@ -278,6 +278,10 @@ export default function ProviderDashboard() {
     <>
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Provider Dashboard</h1>
+
+        <Link href="/dashboard/provider/profile" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            View Profile
+          </Link>
         
         <button
           onClick={() => {

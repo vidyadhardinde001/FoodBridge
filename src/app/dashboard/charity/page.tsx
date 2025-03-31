@@ -12,6 +12,8 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import { BellIcon } from "@/app/components/BellIcon";
+import Link from "next/link";
+import ProviderProfileModal from 'src/app/components/ProviderProfileModal';
 
 interface Food {
   _id: string;
@@ -19,6 +21,7 @@ interface Food {
   foodCategory: string;
   quantity: number;
   provider: {
+    _id: string;
     name: string;
     email: string;
     phone: string;
@@ -54,6 +57,7 @@ export default function CharityDashboard() {
   const [distances, setDistances] = useState<{ [key: string]: string }>({});
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const socket = getSocket();
 
   const loadDistance = async (
@@ -294,6 +298,9 @@ export default function CharityDashboard() {
               </span>
             )}
           </button>
+          <Link href="/dashboard/charity/profile" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            View Profile
+          </Link>
           <button
             onClick={() => {
               localStorage.removeItem("token");
@@ -479,7 +486,8 @@ export default function CharityDashboard() {
                   <p className="text-teal-700">{food.foodCategory}</p>
 
                   <p className="text-gray-600 font-semibold">Provider:</p>
-                  <p className="text-gray-600 bg-white">
+                  <p className="text-gray-600 bg-white cursor-pointer hover:underline"
+                    onClick={() => food.provider?._id && setSelectedProviderId(food.provider._id)}>
                     {food.provider?.name || "No provider available"}
                   </p>
 
@@ -585,6 +593,10 @@ export default function CharityDashboard() {
           )}
         </div>
       </div>
+      <ProviderProfileModal 
+        providerId={selectedProviderId}
+        onClose={() => setSelectedProviderId(null)}
+      />
     </div>
   );
 }
