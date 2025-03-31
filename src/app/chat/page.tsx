@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import LoadingButton from "../components/LoadingButton";
 
 interface ChatContact {
   _id: string;
@@ -98,11 +99,14 @@ export default function ChatList() {
           )}
         </div>
 
-        <Link href="/dashboard">
-          <button className="mt-6 w-full py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition shadow-md">
-            Back to Dashboard
-          </button>
-        </Link>
+        <LoadingButton
+          onClick={async () => {
+            await router.push("/dashboard/provider"); // Ensures it returns a Promise
+          }}
+          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg w-full hover:bg-purple-700 transition"
+        >
+          Back to Dashboard
+        </LoadingButton>
       </div>
     </div>
   );

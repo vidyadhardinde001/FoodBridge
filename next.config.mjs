@@ -30,20 +30,6 @@ const nextConfig = {
 
     return config;
   },
-
-  // Adding domains for next/image
-  
-
-  // async rewrites() {
-  //   return [
-  //     {
-  //       source: '/api/:path*',
-  //       destination: 'http://localhost:3000/api/:path*', // Proxy to Express server
-  //     },
-  //   ];
-  // },
-
-  // ...other config
 };
 
 export default nextConfig;

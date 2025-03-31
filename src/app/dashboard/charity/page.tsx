@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSocket } from "@/lib/socket-client";
 import { connectSocket } from "@/lib/socket-client";
+import LoadingButton from "@/app/components/LoadingButton";
 import {
   GoogleMap,
   LoadScript,
@@ -175,23 +176,23 @@ export default function CharityDashboard() {
   useEffect(() => {
     const filtered = foods.filter((food) => {
       if (food.status !== "available" || !food.provider) return false;
-      
+
       // Combined search for both food name and location
-      const searchMatch = searchQuery === "" || 
+      const searchMatch = searchQuery === "" ||
         food.foodName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         food.pickupLocation.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const vegMatch = vegFilter === null || food.isVeg === vegFilter;
-      const conditionMatch = conditionFilter === null || 
-                      food.condition?.toLowerCase() === conditionFilter.toLowerCase();
-      const categoryMatch = foodCategoryFilter === null || 
-                         food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
-      
+      const conditionMatch = conditionFilter === null ||
+        food.condition?.toLowerCase() === conditionFilter.toLowerCase();
+      const categoryMatch = foodCategoryFilter === null ||
+        food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
+
       return searchMatch && vegMatch && categoryMatch && conditionMatch;
     });
-    
+
     setFilteredFoods(filtered);
-  }, [foods, searchQuery, vegFilter, foodCategoryFilter,conditionFilter]);
+  }, [foods, searchQuery, vegFilter, foodCategoryFilter, conditionFilter]);
 
   const handleRequest = async (foodId: string) => {
     try {
@@ -218,29 +219,99 @@ export default function CharityDashboard() {
   };
 
   const handleRequestConfirmation = async (foodId: string) => {
-    if (confirm("Are you sure you want to request this food?")) {
-      try {
-        const res = await fetch("/api/request", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}` 
-          },
-          body: JSON.stringify({
-            foodId,
-            charityId: localStorage.getItem("userId")
-          })
-        });
-    
-        if (res.ok) {
-          alert("Request sent successfully!");
-        } else {
-          const errorData = await res.json();
-          console.error("Request failed:", errorData);
-        }
-      } catch (error) {
-        console.error("Request failed:", error);
+    // Create a modal dialog element
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+
+    // Modal content with loading state support
+    modal.innerHTML = `
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Confirm Request</h3>
+        <p class="text-gray-600 mb-6">Are you sure you want to request this food item?</p>
+        
+        <div class="flex justify-end space-x-3">
+          <button id="cancel-btn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition">
+            Cancel
+          </button>
+          <button id="confirm-btn" class="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition flex items-center justify-center min-w-24">
+            Confirm
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Add to DOM
+    document.body.appendChild(modal);
+
+    // Get references to buttons
+    const confirmBtn = modal.querySelector('#confirm-btn') as HTMLButtonElement;
+    const cancelBtn = modal.querySelector('#cancel-btn') as HTMLButtonElement;
+
+    // Wrap in Promise to await user action
+    const userConfirmed = await new Promise<boolean>((resolve) => {
+      confirmBtn.onclick = () => resolve(true);
+      cancelBtn.onclick = () => {
+        modal.remove();
+        resolve(false);
+      };
+    });
+
+    if (!userConfirmed) return;
+
+    // User confirmed - show loading state
+    confirmBtn.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Processing...
+    `;
+    confirmBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    try {
+      const res = await fetch("/api/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          foodId,
+          charityId: localStorage.getItem("userId")
+        })
+      });
+
+      if (res.ok) {
+        // Create and show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+        successDiv.textContent = 'Request sent successfully!';
+        document.body.appendChild(successDiv);
+
+        // Remove after delay
+        setTimeout(() => {
+          successDiv.remove();
+          modal.remove();
+        }, 3000);
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Request failed');
       }
+    } catch (error) {
+      // Show error message
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+      errorDiv.textContent = error instanceof Error ? error.message : 'Request failed';
+      document.body.appendChild(errorDiv);
+
+      // Remove after delay
+      setTimeout(() => {
+        errorDiv.remove();
+        modal.remove();
+      }, 3000);
+
+      console.error("Request failed:", error);
     }
   };
 
@@ -268,7 +339,7 @@ export default function CharityDashboard() {
         console.error("Error fetching notifications:", error);
       }
     };
-    
+
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
     return () => clearInterval(interval);
@@ -284,58 +355,58 @@ export default function CharityDashboard() {
       <div className="absolute inset-0 bg-black bg-opacity-0"></div>
 
       <div className="relative z-10">
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-white">Welcome!</h1>
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 hover:bg-white/10 rounded-full"
-          >
-            <BellIcon className="w-6 h-6 text-white" />
-            {notifications.filter(n => !n.isRead).length > 0 && (
-              <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-                {notifications.filter(n => !n.isRead).length}
-              </span>
-            )}
-          </button>
-          <Link href="/dashboard/charity/profile" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white">Welcome!</h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 hover:bg-white/10 rounded-full"
+            >
+              <BellIcon className="w-6 h-6 text-white" />
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+                  {notifications.filter(n => !n.isRead).length}
+                </span>
+              )}
+            </button>
+            <Link href="/dashboard/charity/profile" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             View Profile
-          </Link>
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("role");
-              window.location.href = "/login";
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      {showNotifications && (
-  <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Notifications</h3>
-      {notifications.length === 0 ? (
-        <p className="text-gray-500">No new notifications</p>
-      ) : (
-        notifications.map((notification) => (
-          <div 
-            key={notification._id}
-            className={`p-3 mb-2 rounded-lg ${!notification.isRead ? 'bg-blue-50' : 'bg-gray-100'}`}
-          >
-            <p className="text-sm">{notification.message}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(notification.createdAt).toLocaleDateString()}
-            </p>
+            </Link>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("role");
+                window.location.href = "/login";
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+            >
+              Logout
+            </button>
           </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
+        </header>
+
+        {showNotifications && (
+          <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold mb-2">Notifications</h3>
+              {notifications.length === 0 ? (
+                <p className="text-gray-500">No new notifications</p>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`p-3 mb-2 rounded-lg ${!notification.isRead ? 'bg-blue-50' : 'bg-gray-100'}`}
+                  >
+                    <p className="text-sm">{notification.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(notification.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="bg-gray-200 p-4 rounded-lg shadow-md mb-6">
           <div className="mb-4">
@@ -350,7 +421,7 @@ export default function CharityDashboard() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
@@ -385,7 +456,7 @@ export default function CharityDashboard() {
                 <option value="nonveg">Non-Vegetarian</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-gray-700 font-semibold mb-2">
                 Food Category
@@ -431,162 +502,211 @@ export default function CharityDashboard() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredFoods.map((food) => (
                 <div
                   key={food._id}
-                  className="bg-white p-4 rounded-lg shadow-md border relative"
+                  className="group relative overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-xl"
                 >
-                  <div className="absolute top-2 right-2 flex items-center gap-2">
-                    <span
-                      className={`px-2 py-1 text-sm font-semibold rounded ${
-                        food.isVeg
-                          ? "bg-green-500 text-white"
-                          : "bg-red-500 text-white"
-                      }`}
-                    >
-                      {food.isVeg ? "Veg" : "Non-Veg"}
-                    </span>
+                  {/* Frosted glass background */}
+                  <div className="absolute inset-0 bg-white/30 backdrop-blur-md border border-white/20 rounded-2xl"></div>
 
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5 accent-teal-600"
-                    />
-                  </div>
+                  {/* Card content */}
+                  <div className="relative p-6 h-full flex flex-col">
+                    {/* Header with veg/non-veg and checkbox */}
+                    <div className="flex justify-between items-start mb-4">
 
-                  <h3 className="text-lg font-semibold">{food.foodName}</h3>
+                      <div className="flex gap-2 justify-between items-start">
+                        <span
 
-                  <div className="w-full h-[300px] bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                    {food.imageUrl ? (
-                      <img
-                        src={`/api/proxy-image?url=${encodeURIComponent(
-                          food.imageUrl
-                        )}`}
-                        alt={food.foodName}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          console.error(
-                            "Image failed to load:",
-                            e.currentTarget.src
-                          );
-                          e.currentTarget.src = "/default-avatar.png";
-                        }}
-                      />
-                    ) : (
-                      <p className="text-gray-400">No Image Available</p>
-                    )}
-                  </div>
-
-                  <p className="text-gray-600 font-semibold">Quantity:</p>
-                  <p className="text-green-600 text-2xl font-bold">
-                    {food.quantity}
-                  </p>
-
-                  <p className="text-gray-600 font-semibold">Category:</p>
-                  <p className="text-teal-700">{food.foodCategory}</p>
-
-                  <p className="text-gray-600 font-semibold">Provider:</p>
-                  <p className="text-gray-600 bg-white cursor-pointer hover:underline"
-                    onClick={() => food.provider?._id && setSelectedProviderId(food.provider._id)}>
-                    {food.provider?.name || "No provider available"}
-                  </p>
-
-                  <div className="mt-4">
-                    <div className="flex items-center">
-                      <span className="text-yellow-500 text-2xl">★★★★☆</span>
-                      <span className="ml-2 text-gray-600">(4.5)</span>
-                    </div>
-                    <button
-                      onClick={() => handleViewReviews(food._id)}
-                      className="mt-2 text-blue-600 hover:underline"
-                    >
-                      View All Reviews
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      setExpandedFood(
-                        expandedFood === food._id ? null : food._id
-                      )
-                    }
-                    className="mt-3 flex items-center justify-center w-full px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-blue-600 hover:text-white transition-all duration-300 ease-in-out"
-                  >
-                    {expandedFood === food._id ? "View Less" : "View More"}
-                  </button>
-
-                  {expandedFood === food._id && (
-                    <div className="mt-2 border-t pt-2">
-                      <p className="text-gray-600 font-semibold">
-                        Food description:{" "}
-                      </p>
-                      <p className="text-teal-700 bg-white">
-                        {food.description}
-                      </p>
-
-                      <p className="text-gray-600 font-semibold mt-2">
-                        Location:
-                      </p>
-                      <p className="text-teal-700 mt-2">
-                        {food.pickupLocation}
-                      </p>
-
-                      <div className="w-full h-64 relative">
-                        <LoadScript
-                          googleMapsApiKey={
-                            process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!
-                          }
-                          libraries={["geometry"]}
+                          className={`px-3 py-1 text-xs font-bold rounded-full shadow-md ${food.isVeg
+                            ? "bg-green-600 text-white"
+                            : "bg-red-600 text-white"
+                            }`}
                         >
-                          <GoogleMap
-                            mapContainerStyle={{
-                              width: "100%",
-                              height: "100%",
-                            }}
-                            center={food.coordinates}
-                            zoom={14}
-                          >
-                            <Marker position={food.coordinates} />
-                            <Marker
-                              position={charityLocation}
-                              label="You"
-                              icon={{
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: 8,
-                                fillColor: "#4285F4",
-                                fillOpacity: 1,
-                                strokeWeight: 2,
-                                strokeColor: "#FFFFFF",
-                              }}
-                            />
-                          </GoogleMap>
-                        </LoadScript>
-                        <div className="absolute top-2 left-2 bg-white p-2 rounded">
-                          Distance: {distances[food._id] || "Calculating..."}
+                          {food.isVeg ? "VEG" : "NON-VEG"}
+                        </span>
+
+                        <div className="flex bottom-2 left-2 bg-white/90 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
+                          {distances[food._id] || "Calculating..."}
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleMapRedirect(food.coordinates)}
-                        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg w-full hover:bg-blue-600 transition"
-                      >
-                        Open in Google Maps
-                      </button>
-
-                      <button
-                        onClick={() => handleRequest(food._id)}
-                        className="mt-4 bg-teal-700 text-white px-4 py-2 rounded-lg w-full hover:bg-teal-800 transition"
-                      >
-                        Contact
-                      </button>
-                      <button
-                        onClick={() => handleRequestConfirmation(food._id)}
-                        className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg w-full hover:bg-purple-700 transition"
-                      >
-                        Request
-                      </button>
+                      <input
+                        type="checkbox"
+                        className="w-5 h-5 accent-teal-600 cursor-pointer transform transition hover:scale-110"
+                      />
                     </div>
-                  )}
+
+                    {/* Food image with hover zoom effect */}
+                    <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4 group-hover:shadow-lg transition-all duration-300">
+                      {food.imageUrl ? (
+                        <img
+                          src={`/api/proxy-image?url=${encodeURIComponent(food.imageUrl)}`}
+                          alt={food.foodName}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          onError={(e) => {
+                            console.error("Image failed to load:", e.currentTarget.src);
+                            e.currentTarget.src = "/default-avatar.png";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center">
+                          <p className="text-gray-400">No Image Available</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Food name and category */}
+                    <h3 className="text-xl font-bold text-gray-800 mb-1">{food.foodName}</h3>
+                    <p className="text-teal-700 font-medium text-sm mb-3">{food.foodCategory}</p>
+
+                    {/* Quantity and provider */}
+                    <div className="flex justify-between items-center mb-4">
+
+
+                      <div>
+                        <p className="text-gray-600 text-xs font-semibold">QUANTITY (KG)</p>
+                        <p className="text-green-600 text-xl font-bold">{food.quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-gray-600 text-xs font-semibold">PROVIDER</p>
+                        <p className="text-gray-700 bg-white cursor-pointer hover:underline"
+                          onClick={() => food.provider?._id && setSelectedProviderId(food.provider._id)}>
+                          {food.provider?.name || "No provider available"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                          <p className="text-gray-600 text-xs font-semibold mb-1">PICKUP LOCATION</p>
+                          <p className="text-gray-700">{food.pickupLocation}</p>
+                        </div>
+
+
+                    {/* View more button with animated arrow */}
+                    <button
+                      onClick={() => setExpandedFood(expandedFood === food._id ? null : food._id)}
+                      className="mt-4 flex items-center justify-between w-full px-4 py-3 bg-white/70 hover:bg-white/90 text-gray-800 font-medium rounded-lg border border-gray-200 transition-all duration-300 group-hover:shadow-sm"
+                    >
+                      <span>{expandedFood === food._id ? "Show Less" : "Show Details"}</span>
+                      <svg
+                        className={`w-5 h-5 ml-2 transition-transform duration-300 ${expandedFood === food._id ? "rotate-180" : ""}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Expanded content */}
+                    {expandedFood === food._id && (
+                      <div className="mt-4 pt-4 border-t border-gray-200/70 space-y-4">
+
+                        <div className = "flex justify-between items-center mb-4">
+                          <div>
+                            <p className="text-gray-600 text-xs font-semibold mb-1">DESCRIPTION</p>
+                            <p className="text-gray-700">{food.description || "No description provided."}</p>
+                          </div>
+
+                          {/* Ratings */}
+                          <div className="mt-auto">
+                            <div className="flex items-center mb-2">
+                              <div className="relative">
+                                <div className="text-gray-300 text-xl">★★★★★</div>
+                                <div
+                                  className="text-yellow-400 text-xl absolute top-0 overflow-hidden"
+                                  style={{ width: `${4.5 / 5 * 100}%` }}
+                                >
+                                  ★★★★★
+                                </div>
+                              </div>
+                              <span className="ml-2 text-gray-600 text-sm">4.5</span>
+                            </div>
+                            <button
+                              onClick={() => handleViewReviews(food._id)}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                            >
+                              View All Reviews →
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Map container
+                        <div className="relative h-64 rounded-xl overflow-hidden border border-gray-200/50">
+                          <LoadScript
+                            googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
+                            libraries={["geometry"]}
+                          >
+                            <GoogleMap
+                              mapContainerStyle={{ width: "100%", height: "100%" }}
+                              center={food.coordinates}
+                              zoom={14}
+                              options={{
+                                styles: [
+                                  {
+                                    featureType: "all",
+                                    elementType: "labels.text.fill",
+                                    stylers: [{ saturation: 36 }, { color: "#333333" }, { lightness: 40 }],
+                                  },
+                                  {
+                                    featureType: "all",
+                                    elementType: "labels.text.stroke",
+                                    stylers: [{ visibility: "on" }, { color: "#ffffff" }, { lightness: 16 }],
+                                  },
+                                ],
+                              }}
+                            >
+                              <Marker position={food.coordinates} />
+                              <Marker
+                                position={charityLocation}
+                                label="You"
+                                icon={{
+                                  path: google.maps.SymbolPath.CIRCLE,
+                                  scale: 8,
+                                  fillColor: "#4285F4",
+                                  fillOpacity: 1,
+                                  strokeWeight: 2,
+                                  strokeColor: "#FFFFFF",
+                                }}
+                              />
+                            </GoogleMap>
+                          </LoadScript>
+
+                        </div> */}
+
+                        {/* Action buttons */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={() => handleMapRedirect(food.coordinates)}
+                            className="flex items-center justify-center space-x-2 bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 border border-gray-300 rounded-lg transition-all duration-300 hover:shadow-sm"
+                          >
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            <span>Map</span>
+                          </button>
+
+                          <LoadingButton
+                            onClick={() => handleRequest(food._id)}
+                            className="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-sm"
+                            loadingText="Contacting..."
+                          >
+                            Contact Provider
+                          </LoadingButton>
+
+                          <LoadingButton
+                            onClick={() => handleRequestConfirmation(food._id)}
+                            className="col-span-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-sm"
+                          >
+                            Request Food Donation
+                          </LoadingButton>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

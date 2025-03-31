@@ -91,18 +91,38 @@ export default function CharityProfile() {
   }, []);
 
   const submitReview = async (foodId: string) => {
-    const res = await fetch('/api/reviews', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ foodId, rating, comment })
-    });
-
-    if (res.ok) {
+    // Add validation before submission
+    if (!rating || rating < 1 || rating > 5) {
+      alert('Please select a rating between 1-5 stars');
+      return;
+    }
+  
+    if (!comment.trim()) {
+      alert('Please write a review comment');
+      return;
+    }
+  
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ foodId, rating, comment })
+      });
+  
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit review');
+      }
+  
       setShowReviewForm(null);
       router.refresh();
+    } catch (error) {
+      console.error('Submission error:', error);
+      alert(error.message || 'Failed to submit review');
     }
   };
 

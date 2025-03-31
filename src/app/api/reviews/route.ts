@@ -1,3 +1,5 @@
+// api/reviews/route.ts
+
 import { connectDB, Review, Food, User } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
@@ -11,7 +13,7 @@ export async function POST(req: Request) {
     const decoded: any = jwt.verify(token!, process.env.JWT_SECRET!);
     const charityId = decoded.id;
 
-    const food = await Food.findById(foodId).populate('provider');
+    const food = await Food.findById(foodId).populate('provider').populate('charity');;
     if (!food || food.status !== 'picked_up') {
       return NextResponse.json({ error: 'Invalid food item' }, { status: 400 });
     }
