@@ -654,7 +654,10 @@ export default function CharityDashboard() {
 
                       <div>
                         <p className="text-gray-600 text-xs font-semibold">QUANTITY (KG)</p>
-                        <p className="text-green-600 text-xl font-bold">{food.quantity}</p>
+                        <p className="text-green-600 text-xl font-bold animate-pulse drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]">
+                          {food.quantity}
+                        </p>
+
                       </div>
                       <div className="text-right">
                         <p className="text-gray-600 text-xs font-semibold">PROVIDER</p>
@@ -690,7 +693,7 @@ export default function CharityDashboard() {
 
                     {/* Expanded content */}
                     {expandedFood === food._id && (
-                      <div className="mt-4 pt-4 border-t border-gray-200/70 space-y-4">
+                      <div className="mt-2 border-t border-gray-200/70 space-y-4">
 
                         <div className="flex justify-between items-center mb-4">
                           <div>
@@ -700,7 +703,7 @@ export default function CharityDashboard() {
 
                           {/* Ratings */}
                           <div className="mt-auto">
-                            <div className="flex items-center mb-2">
+                            <div className="flex items-center">
                               <div className="relative">
                                 <div className="text-gray-300 text-xl">★★★★★</div>
                                 <div
@@ -786,10 +789,11 @@ export default function CharityDashboard() {
 
                           <LoadingButton
                             onClick={() => handleRequestConfirmation(food._id)}
-                            className="col-span-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-sm"
+                            className="col-span-2 bg-white border-2 border-teal-600 text-teal-600 font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:bg-teal-600 hover:text-white hover:shadow-md"
                           >
                             Request Food Donation
                           </LoadingButton>
+
                         </div>
                       </div>
                     )}

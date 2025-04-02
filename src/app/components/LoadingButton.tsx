@@ -1,4 +1,3 @@
-// components/LoadingButton.tsx
 'use client';
 
 import { ReactNode, MouseEvent } from 'react';
@@ -20,7 +19,7 @@ export default function LoadingButton({
   const handleClick = async (e: MouseEvent<HTMLButtonElement>) => {
     const button = e.currentTarget;
     const originalContent = button.innerHTML;
-    
+
     // Set loading state
     button.innerHTML = `
       <span class="flex items-center justify-center">
@@ -33,12 +32,19 @@ export default function LoadingButton({
     `;
     button.disabled = true;
 
+    const startTime = Date.now();
+
     try {
-      await onClick(e); // Will wait for the promise to resolve
+      await onClick(e); // Wait for the actual process
     } finally {
-      // Restore original state
-      button.innerHTML = originalContent;
-      button.disabled = false;
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(5000 - elapsedTime, 0); // Ensure a minimum of 5s
+
+      setTimeout(() => {
+        // Restore original state after 5s
+        button.innerHTML = originalContent;
+        button.disabled = false;
+      }, remainingTime);
     }
   };
 
