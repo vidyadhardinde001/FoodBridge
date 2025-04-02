@@ -59,59 +59,87 @@ export default function CharityDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'distance' | 'quantity' | null>(null);
+  const [distanceValues, setDistanceValues] = useState<{ [key: string]: number }>({});
+  const [loadingDistances, setLoadingDistances] = useState(false);
   const socket = getSocket();
 
-  const loadDistance = async (
-    foodId: string,
-    origin: { lat: number; lng: number }
-  ) => {
+
+  // Update your loadDistances function:
+  const loadDistances = async (foodsToCalculate: Food[]) => {
+    setLoadingDistances(true);
+    const newDistances: { [key: string]: string } = {};
+    const newDistanceValues: { [key: string]: number } = {};
+
     try {
-      const response = await fetch(
-        `https://routes.googleapis.com/directions/v2:computeRoutes`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-            "X-Goog-FieldMask": "routes.distanceMeters",
-          },
-          body: JSON.stringify({
-            origin: {
-              location: {
-                latLng: {
-                  latitude: origin.lat,
-                  longitude: origin.lng,
+      await Promise.all(foodsToCalculate.map(async (food) => {
+        try {
+          const response = await fetch(`https://routes.googleapis.com/directions/v2:computeRoutes`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+              "X-Goog-FieldMask": "routes.distanceMeters",
+            },
+            body: JSON.stringify({
+              origin: {
+                location: {
+                  latLng: {
+                    latitude: food.coordinates.lat,
+                    longitude: food.coordinates.lng,
+                  },
                 },
               },
-            },
-            destination: {
-              location: {
-                latLng: {
-                  latitude: charityLocation.lat,
-                  longitude: charityLocation.lng,
+              destination: {
+                location: {
+                  latLng: {
+                    latitude: charityLocation.lat,
+                    longitude: charityLocation.lng,
+                  },
                 },
               },
-            },
-            travelMode: "DRIVE",
-          }),
+              travelMode: "DRIVE",
+            }),
+          });
+
+          if (!response.ok) throw new Error("Failed to calculate distance");
+
+          const data = await response.json();
+          if (data.routes?.[0]?.distanceMeters) {
+            const distanceKm = data.routes[0].distanceMeters / 1000;
+            newDistances[food._id] = `${distanceKm.toFixed(1)} km`;
+            newDistanceValues[food._id] = distanceKm;
+          }
+        } catch (error) {
+          console.error(`Error calculating distance for food ${food._id}:`, error);
+          newDistances[food._id] = "Error";
+          newDistanceValues[food._id] = Infinity;
         }
-      );
+      }));
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Routes API Error:", errorData);
-        return;
-      }
+      // Only update state if we actually got new distances
+      if (Object.keys(newDistances).length > 0) {
+        setDistances(prev => {
+          // Only update if the distance is actually new or different
+          const updated = { ...prev };
+          let hasChanges = false;
 
-      const data = await response.json();
-      if (data.routes?.[0]?.distanceMeters) {
-        setDistances((prev) => ({
-          ...prev,
-          [foodId]: `${(data.routes[0].distanceMeters / 1000).toFixed(1)} km`,
-        }));
+          for (const [id, distance] of Object.entries(newDistances)) {
+            if (prev[id] !== distance) {
+              updated[id] = distance;
+              hasChanges = true;
+            }
+          }
+
+          return hasChanges ? updated : prev;
+        });
+
+        setDistanceValues(prev => ({ ...prev, ...newDistanceValues }));
       }
     } catch (error) {
-      console.error("Error fetching distance:", error);
+      console.error("Error in distance calculation batch:", error);
+    } finally {
+      setLoadingDistances(false);
     }
   };
 
@@ -121,13 +149,33 @@ export default function CharityDashboard() {
   };
 
   useEffect(() => {
-    if (expandedFood && charityLocation.lat !== 0) {
-      const food = foods.find((f) => f._id === expandedFood);
-      if (food && !distances[expandedFood]) {
-        loadDistance(expandedFood, food.coordinates);
+    if (charityLocation.lat !== 0 && foods.length > 0) {
+      const availableFoods = foods.filter(food =>
+        food.status === "available" &&
+        food.provider &&
+        !distances[food._id] // Only calculate if we don't already have this distance
+      );
+
+      if (availableFoods.length > 0) {
+        loadDistances(availableFoods);
       }
     }
-  }, [expandedFood, charityLocation]);
+  }, [charityLocation, foods]); // Remove distances from dependencies
+
+  useEffect(() => {
+    const fetchCharityLocation = async () => {
+      try {
+        const res = await fetch(`/api/users/${localStorage.getItem("userId")}`);
+        if (!res.ok) throw new Error("Failed to fetch charity location");
+        const data = await res.json();
+        setCharityLocation(data.coordinates);
+      } catch (error) {
+        console.error("Error fetching charity location:", error);
+      }
+    };
+
+    fetchCharityLocation();
+  }, []);
 
   useEffect(() => {
     const fetchCharityLocation = async () => {
@@ -173,26 +221,39 @@ export default function CharityDashboard() {
     };
   }, [socket]);
 
+
   useEffect(() => {
+    // Filter foods
     const filtered = foods.filter((food) => {
       if (food.status !== "available" || !food.provider) return false;
 
-      // Combined search for both food name and location
-      const searchMatch = searchQuery === "" ||
+      const matchesSearch = searchQuery === "" ||
         food.foodName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         food.pickupLocation.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const vegMatch = vegFilter === null || food.isVeg === vegFilter;
-      const conditionMatch = conditionFilter === null ||
+      const matchesVeg = vegFilter === null || food.isVeg === vegFilter;
+      const matchesCondition = conditionFilter === null ||
         food.condition?.toLowerCase() === conditionFilter.toLowerCase();
-      const categoryMatch = foodCategoryFilter === null ||
+      const matchesCategory = foodCategoryFilter === null ||
         food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
 
-      return searchMatch && vegMatch && categoryMatch && conditionMatch;
+      return matchesSearch && matchesVeg && matchesCondition && matchesCategory;
     });
 
-    setFilteredFoods(filtered);
-  }, [foods, searchQuery, vegFilter, foodCategoryFilter, conditionFilter]);
+    // Sort foods
+    const sorted = [...filtered];
+    if (sortBy === 'distance') {
+      sorted.sort((a, b) => {
+        const distA = distanceValues[a._id] || Infinity;
+        const distB = distanceValues[b._id] || Infinity;
+        return distA - distB; // Nearest first
+      });
+    } else if (sortBy === 'quantity') {
+      sorted.sort((a, b) => b.quantity - a.quantity); // Highest quantity first
+    }
+
+    setFilteredFoods(sorted);
+  }, [foods, searchQuery, vegFilter, conditionFilter, foodCategoryFilter, distanceValues, sortBy]);
 
   const handleRequest = async (foodId: string) => {
     try {
@@ -370,7 +431,7 @@ export default function CharityDashboard() {
               )}
             </button>
             <Link href="/dashboard/charity/profile" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            View Profile
+              View Profile
             </Link>
             <button
               onClick={() => {
@@ -478,6 +539,22 @@ export default function CharityDashboard() {
                 <option value="cooked meals">Cooked Meals</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Sort By
+              </label>
+              <select
+                className="w-full p-2 border rounded-lg"
+                value={sortBy || ''}
+                onChange={(e) => setSortBy(e.target.value === '' ? null : (e.target.value as 'distance' | 'quantity'))}
+              >
+                <option value="">Default</option>
+                <option value="distance">Distance (Nearest)</option>
+                <option value="quantity">Quantity</option>
+              </select>
+
+            </div>
           </div>
         </div>
 
@@ -526,9 +603,19 @@ export default function CharityDashboard() {
                         >
                           {food.isVeg ? "VEG" : "NON-VEG"}
                         </span>
-
+                        {/* Replace your current distance display with this */}
                         <div className="flex bottom-2 left-2 bg-white/90 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
-                          {distances[food._id] || "Calculating..."}
+                          {loadingDistances ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Calculating...
+                            </span>
+                          ) : (
+                            distances[food._id] || "Not available"
+                          )}
                         </div>
                       </div>
 
@@ -579,9 +666,9 @@ export default function CharityDashboard() {
                     </div>
 
                     <div>
-                          <p className="text-gray-600 text-xs font-semibold mb-1">PICKUP LOCATION</p>
-                          <p className="text-gray-700">{food.pickupLocation}</p>
-                        </div>
+                      <p className="text-gray-600 text-xs font-semibold mb-1">PICKUP LOCATION</p>
+                      <p className="text-gray-700">{food.pickupLocation}</p>
+                    </div>
 
 
                     {/* View more button with animated arrow */}
@@ -605,7 +692,7 @@ export default function CharityDashboard() {
                     {expandedFood === food._id && (
                       <div className="mt-4 pt-4 border-t border-gray-200/70 space-y-4">
 
-                        <div className = "flex justify-between items-center mb-4">
+                        <div className="flex justify-between items-center mb-4">
                           <div>
                             <p className="text-gray-600 text-xs font-semibold mb-1">DESCRIPTION</p>
                             <p className="text-gray-700">{food.description || "No description provided."}</p>
@@ -713,7 +800,7 @@ export default function CharityDashboard() {
           )}
         </div>
       </div>
-      <ProviderProfileModal 
+      <ProviderProfileModal
         providerId={selectedProviderId}
         onClose={() => setSelectedProviderId(null)}
       />
