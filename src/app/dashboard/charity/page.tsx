@@ -30,6 +30,8 @@ interface Food {
     address: string;
   };
   pickupLocation: string;
+  pricingType: 'free' | 'paid';
+  price?: number;
   description: string;
   isVeg: boolean;
   condition: 'used' | 'unused';
@@ -63,6 +65,7 @@ export default function CharityDashboard() {
   const [sortBy, setSortBy] = useState<'distance' | 'quantity' | null>(null);
   const [distanceValues, setDistanceValues] = useState<{ [key: string]: number }>({});
   const [loadingDistances, setLoadingDistances] = useState(false);
+  const [pricingFilter, setPricingFilter] = useState<'free' | 'paid' | null>(null);
   const socket = getSocket();
 
 
@@ -237,8 +240,10 @@ export default function CharityDashboard() {
         food.condition?.toLowerCase() === conditionFilter.toLowerCase();
       const matchesCategory = foodCategoryFilter === null ||
         food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
+      const matchesPricing = pricingFilter === null || 
+        food.pricingType === pricingFilter;
 
-      return matchesSearch && matchesVeg && matchesCondition && matchesCategory;
+      return matchesSearch && matchesVeg && matchesCondition && matchesCategory && matchesPricing;
     });
 
     // Sort foods
@@ -251,10 +256,15 @@ export default function CharityDashboard() {
       });
     } else if (sortBy === 'quantity') {
       sorted.sort((a, b) => b.quantity - a.quantity); // Highest quantity first
+    } else if (sortBy === 'pricing') {
+      sorted.sort((a, b) => {
+        if (a.pricingType === b.pricingType) return 0;
+        return a.pricingType === 'free' ? -1 : 1;
+      });
     }
 
     setFilteredFoods(sorted);
-  }, [foods, searchQuery, vegFilter, conditionFilter, foodCategoryFilter, distanceValues, sortBy]);
+  }, [foods, searchQuery, vegFilter, conditionFilter, foodCategoryFilter, distanceValues, sortBy,pricingFilter]);
 
   const handleRequest = async (foodId: string) => {
     try {
@@ -406,6 +416,8 @@ export default function CharityDashboard() {
     const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
     return () => clearInterval(interval);
   }, []);
+
+
 
   if (!isLoaded) return <p>Loading Map...</p>;
 
@@ -565,13 +577,29 @@ export default function CharityDashboard() {
               <select
                 className="w-full p-2 border rounded-lg"
                 value={sortBy || ''}
-                onChange={(e) => setSortBy(e.target.value === '' ? null : (e.target.value as 'distance' | 'quantity'))}
+                onChange={(e) => setSortBy(e.target.value === '' ? null : (e.target.value as 'distance' | 'quantity' | 'pricing'))}
               >
                 <option value="">Default</option>
                 <option value="distance">Distance (Nearest)</option>
                 <option value="quantity">Quantity</option>
+                <option value="pricing">Pricing Type</option>
               </select>
 
+            </div>
+
+            <div>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Pricing Type
+              </label>
+              <select
+                className="w-full p-2 border rounded-lg"
+                value={pricingFilter || ''}
+                onChange={(e) => setPricingFilter(e.target.value || null)}
+              >
+                <option value="">All</option>
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
+              </select>
             </div>
           </div>
         </div>
@@ -689,6 +717,22 @@ export default function CharityDashboard() {
                     <div>
                       <p className="text-gray-600 text-xs font-semibold mb-1">PICKUP LOCATION</p>
                       <p className="text-gray-700">{food.pickupLocation}</p>
+                    </div>
+
+                    {/* Add near the quantity display */}
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        food.pricingType === 'free' 
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {food.pricingType === 'free' ? 'FREE' : 'PAID'}
+                      </span>
+                      {food.pricingType === 'paid' && (
+                        <span className="text-blue-600 font-semibold">
+                          ₹{food.price}
+                        </span>
+                      )}
                     </div>
 
 

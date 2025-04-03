@@ -85,6 +85,8 @@ interface FoodDocument extends mongoose.Document {
   imageUrl?: string;
   status: 'available' | 'pending' | 'picked_up';
   pickupLocation: string;
+  pricingType: 'free' | 'paid';
+  price?: number;
   description: string;
   isVeg: boolean;
   condition: 'used' | 'unused';
@@ -104,6 +106,19 @@ const FoodSchema = new mongoose.Schema<FoodDocument>({
   imageUrl: { type: String },
   status: { type: String, enum: ['available', 'pending', 'picked_up'], default: 'available' },
   pickupLocation: { type: String, required: true },
+  pricingType: {
+    type: String,
+    enum: ['free', 'paid'],
+    required: true,
+    default: 'free'
+  },
+  price: {
+    type: Number,
+    required: function() {
+      return this.pricingType === 'paid';
+    },
+    min: 0
+  },
   description: { type: String, required: true },
   isVeg: { type: Boolean, required: true },
   condition: { 

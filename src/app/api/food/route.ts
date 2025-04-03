@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 // POST endpoint to create a new food listing
 export async function POST(req: Request) {
   await connectDB();
-  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl,foodType,foodCondition, coordinates } = await req.json();
+  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl,foodType,foodCondition, coordinates,pricingType, price } = await req.json();
   const token = req.headers.get('authorization')?.split(' ')[1];
 
   if (!token) {
@@ -61,12 +61,21 @@ export async function POST(req: Request) {
 
     const isVeg = foodType === 'veg';
 
+    if (pricingType === 'paid' && (!price || price <= 0)) {
+      return NextResponse.json(
+        { error: "Invalid price for paid listing" },
+        { status: 400 }
+      );
+    }
+
     // Create the food listing with the geocoded coordinates
     const food = await Food.create({
       foodName,
       foodCategory,
       quantity,
       pickupLocation,
+      pricingType,
+      price: pricingType === 'paid' ? price : undefined,
       description,
       imageUrl,
       provider: decoded.id,
