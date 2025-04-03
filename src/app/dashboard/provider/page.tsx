@@ -6,7 +6,7 @@ import React from "react";
 import Link from "next/link"; // If using Next.js
 import { getSocket } from "@/lib/socket-client";
 import { MessageCircle } from "lucide-react"; // Import the MessageCircle icon
-
+import { UserCircleIcon } from '@heroicons/react/24/outline';
 
 declare global {
   interface Window {
@@ -288,14 +288,33 @@ export default function ProviderDashboard() {
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold text-white">Welcome!</h1>
 
-        <Link href="/dashboard/provider/profile" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            View Profile
-          </Link>
+
 
         <div className="flex items-center gap-4">
+
+          <Link
+            href="/dashboard/provider/profile"
+            className="relative inline-flex items-center justify-center px-5 py-2.5 font-medium text-white transition-all duration-300 ease-out rounded-lg group"
+          >
+            {/* Gradient background */}
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg group-hover:from-blue-700 group-hover:to-blue-600"></span>
+
+            {/* Animated border */}
+            <span className="absolute inset-0 border-2 border-white/20 rounded-lg group-hover:border-white/30 transition-all duration-300"></span>
+
+            {/* Button content with icon */}
+            <span className="relative flex items-center space-x-2">
+              <UserCircleIcon className="w-5 h-5" />
+            </span>
+
+            {/* Hover animation effect */}
+            <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
+            </span>
+          </Link>
           <Link href="/chat">
-            <button className="p-3 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition">
-              <MessageCircle className="w-6 h-6 text-blue-600" />
+            <button className="p-1.5 pl-2 pr-2 bg-white shadow-lg rounded-lg flex items-center justify-center gap-2 text-lg font-medium border border-gray-300 hover:bg-gray-100 transition">
+              <MessageCircle className="w-5 h-6 text-blue-600" />
             </button>
           </Link>
 
@@ -500,6 +519,6 @@ export default function ProviderDashboard() {
           </div>
         </div>
       )}
-     </div>
+    </div>
   );
 }

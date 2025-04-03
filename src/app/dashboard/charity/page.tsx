@@ -15,6 +15,7 @@ import {
 import { BellIcon } from "@/app/components/BellIcon";
 import Link from "next/link";
 import ProviderProfileModal from 'src/app/components/ProviderProfileModal';
+import { UserCircleIcon } from '@heroicons/react/24/outline';
 
 interface Food {
   _id: string;
@@ -430,9 +431,26 @@ export default function CharityDashboard() {
                 </span>
               )}
             </button>
-            <Link href="/dashboard/charity/profile" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-              View Profile
-            </Link>
+            <Link
+            href="/dashboard/charity/profile"
+            className="relative inline-flex items-center justify-center px-5 py-2.5 font-medium text-white transition-all duration-300 ease-out rounded-lg group"
+          >
+            {/* Gradient background */}
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg group-hover:from-blue-700 group-hover:to-blue-600"></span>
+
+            {/* Animated border */}
+            <span className="absolute inset-0 border-2 border-white/20 rounded-lg group-hover:border-white/30 transition-all duration-300"></span>
+
+            {/* Button content with icon */}
+            <span className="relative flex items-center space-x-2">
+              <UserCircleIcon className="w-5 h-5" />
+            </span>
+
+            {/* Hover animation effect */}
+            <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
+            </span>
+          </Link>
             <button
               onClick={() => {
                 localStorage.removeItem("token");
