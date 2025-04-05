@@ -32,6 +32,8 @@ type Food = {
   foodType: string;
   quantity: number;
   pickupLocation: string;
+  pricingType: 'free' | 'paid';
+  price?: number;
   description: string;
   imageUrl: string;
   coordinates: {
@@ -52,6 +54,8 @@ export default function ProviderDashboard() {
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false); // Success state
   const [error, setError] = useState<string | null>(null); // Added error state
   const [requests, setRequests] = useState<any[]>([]);
+  // Add at the top of the ProviderDashboard component
+  const [pricingType, setPricingType] = useState<'free' | 'paid'>('free');
 
   useEffect(() => {
     const fetchRequests = async () => {
@@ -215,6 +219,8 @@ export default function ProviderDashboard() {
         imageUrl: imageUrl,
         coordinates,
         foodCondition: formData.get("foodCondition"),
+        pricingType: formData.get("pricingType"),
+        price: formData.get("price") ? Number(formData.get("price")) : undefined,
       };
 
       const res = await fetch("/api/food", {
@@ -426,6 +432,40 @@ export default function ProviderDashboard() {
                 <option value="veg">Vegetarian</option>
                 <option value="nonveg">Non-Vegetarian</option>
               </select>
+            </div>
+
+            {/* Replace existing price input with this */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Pricing Type
+                </label>
+                <select
+                  name="pricingType"
+                  className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  required
+                  onChange={(e) => setPricingType(e.target.value)}
+                >
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
+
+              {pricingType === 'paid' && (
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    placeholder="Enter price"
+                    className="w-full p-3 bg-gray-50 border border-teal-500 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    min="0"
+                    required={pricingType === 'paid'}
+                  />
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2">
