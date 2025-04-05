@@ -47,69 +47,68 @@ const AboutUs = () => {
   ];
 
   return (
-    <div className="p-8 min-h-screen">
+    <div className="p-8 min-h-screen bg-gray-50">
       {/* Project Description and Logo Row */}
-      <div className="flex flex-col md:flex-row items-stretch mb-12 gap-8">
-        {/* Project Description Card */}
-        <div className="md:w-1/2 bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-          <h1 className="text-3xl font-bold text-green-600 mb-6">About FoodBridge</h1>
-          <div className="space-y-4 text-gray-700">
-            <p>
-              FoodBridge connects surplus food from businesses to communities in need through 
-              our real-time matching platform. We've redirected 10M+ meals since 2020.
-            </p>
-            <p>
-              Our technology helps restaurants, grocers, and producers reduce waste while 
-              supporting local shelters and food banks.
-            </p>
-          </div>
+      <div className="flex flex-col md:flex-row items-stretch mb-16 gap-8">
+        {/* Project Description */}
+        <div className="md:w-1/2 bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition duration-300">
+          <h1 className="text-4xl font-extrabold text-green-600 mb-6">About FoodBridge</h1>
+          <p className="text-gray-700 text-lg leading-relaxed mb-4">
+            FoodBridge connects surplus food from businesses to communities in need through our real-time matching platform.
+            We've redirected <span className="font-bold text-green-600">10M+ meals</span> since 2020.
+          </p>
+          <p className="text-gray-700 text-lg leading-relaxed">
+            Our technology helps restaurants, grocers, and producers reduce waste while supporting local shelters and food banks.
+          </p>
         </div>
 
-        {/* Logo Card */}
-        <div className="md:w-1/2 flex items-center justify-center bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+        {/* Logo Section */}
+        <div className="md:w-1/2 flex items-center justify-center bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
           <Image
             src="/images/foodbridge.png"
             alt="FoodBridge Logo"
             width={400}
             height={200}
-            className="object-contain w-full h-auto max-w-xs"
+            className="object-contain w-full h-auto max-w-xs transition-transform duration-500 hover:scale-105"
           />
         </div>
       </div>
 
       {/* Team Section */}
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center justify-center">
+        <h2 className="text-3xl font-bold text-gray-800 mb-12 text-center flex items-center justify-center">
           <FaUsers className="text-green-500 mr-3" /> Meet Our Leadership Team
         </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {teamMembers.map((member) => (
-            <div key={member.id} className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all">
-              {/* Profile Image */}
-              <div className="relative h-64 bg-gray-100">
+            <div key={member.id} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden hover:shadow-2xl transform transition duration-300 hover:-translate-y-1">
+              {/* Image */}
+              <div className="relative h-64 bg-gray-100 overflow-hidden">
                 <Image
                   src={member.image}
                   alt={member.name}
                   fill
-                  className="object-cover"
+                  className="object-cover transition-transform duration-500 hover:scale-110"
                 />
               </div>
 
-              {/* Profile Content */}
+              {/* Content */}
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-1">{member.name}</h3>
+                <h3 className="text-2xl font-semibold text-gray-800 mb-1">{member.name}</h3>
                 <p className="text-green-600 font-medium mb-4">{member.role}</p>
-                
-                {/* Bio */}
-                <p className="text-gray-600 mb-4">{member.bio}</p>
-                
+
+                <p className="text-gray-600 mb-4 leading-relaxed">{member.bio}</p>
+
                 {/* Expertise */}
                 <div className="mb-5">
                   <h4 className="text-sm font-semibold text-gray-500 mb-2">EXPERTISE</h4>
                   <div className="flex flex-wrap gap-2">
                     {member.expertise.map((skill, i) => (
-                      <span key={i} className="bg-green-50 text-green-700 text-xs px-3 py-1 rounded-full">
+                      <span
+                        key={i}
+                        className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full animate-pulse hover:animate-none"
+                      >
                         {skill}
                       </span>
                     ))}
@@ -117,33 +116,29 @@ const AboutUs = () => {
                 </div>
 
                 {/* Contact */}
-                <div className="border-t border-gray-100 pt-4">
+                <div className="border-t border-gray-200 pt-4">
                   <h4 className="text-sm font-semibold text-gray-500 mb-3">CONTACT</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center text-gray-700">
-                      <FaEnvelope className="text-green-500 mr-3" />
-                      <a href={`mailto:${member.contact.email}`} className="hover:text-green-600">
-                        {member.contact.email}
-                      </a>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <div className="flex items-center gap-3 hover:text-green-600 transition-colors">
+                      <FaEnvelope />
+                      <a href={`mailto:${member.contact.email}`}>{member.contact.email}</a>
                     </div>
-                    <div className="flex items-center text-gray-700">
-                      <FaPhone className="text-green-500 mr-3" />
-                      <a href={`tel:${member.contact.phone.replace(/\D/g, '')}`} className="hover:text-green-600">
-                        {member.contact.phone}
-                      </a>
+                    <div className="flex items-center gap-3 hover:text-green-600 transition-colors">
+                      <FaPhone />
+                      <a href={`tel:${member.contact.phone.replace(/\D/g, '')}`}>{member.contact.phone}</a>
                     </div>
                     {member.contact.linkedin && (
-                      <div className="flex items-center text-gray-700">
-                        <FaLinkedin className="text-green-500 mr-3" />
-                        <a href={member.contact.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-green-600">
+                      <div className="flex items-center gap-3 hover:text-blue-600 transition-colors">
+                        <FaLinkedin />
+                        <a href={member.contact.linkedin} target="_blank" rel="noopener noreferrer">
                           LinkedIn Profile
                         </a>
                       </div>
                     )}
                     {member.contact.twitter && (
-                      <div className="flex items-center text-gray-700">
-                        <FaTwitter className="text-green-500 mr-3" />
-                        <a href={member.contact.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-green-600">
+                      <div className="flex items-center gap-3 hover:text-blue-400 transition-colors">
+                        <FaTwitter />
+                        <a href={member.contact.twitter} target="_blank" rel="noopener noreferrer">
                           Twitter
                         </a>
                       </div>
