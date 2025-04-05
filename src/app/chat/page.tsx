@@ -72,19 +72,22 @@ export default function ChatList() {
                   <Image
                     src={
                       userRole === "provider"
-                        ? chat.charityId.profileImage || "/default-avatar.png"
-                        : chat.providerId.profileImage || "/default-avatar.png"
+                        ? chat.charityId?.profileImage || "/default-avatar.png"
+                        : chat.providerId?.profileImage || "/default-avatar.png"
                     }
                     alt="Profile"
                     width={48}
                     height={48}
                     className="w-12 h-12 rounded-full border border-white shadow-md mr-4"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/default-avatar.png";
+                    }}
                   />
                   <div className="flex-1">
                     <h3 className="text-lg font-medium text-white">
                       {userRole === "provider"
-                        ? chat.charityId.name
-                        : chat.providerId.name}
+                        ? chat.charityId?.name || "Unknown Charity"
+                        : chat.providerId?.name || "Unknown Provider"}
                     </h3>
                     <p className="text-gray-400 text-sm">
                       {chat.messages[chat.messages.length - 1]?.text || "New chat"}
