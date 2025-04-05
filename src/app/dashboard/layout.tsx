@@ -45,9 +45,6 @@ export default function DashboardLayout({
           <Link href="/features" className="flex items-center p-3 text-gray-700 hover:bg-gray-300 rounded-lg transition">
             <FaListAlt className="mr-3" /> Features
           </Link>
-          <Link href="/analytics" className="flex items-center p-3 text-gray-700 hover:bg-gray-300 rounded-lg transition">
-            <FaChartBar className="mr-3" /> Analytics
-          </Link>
           <Link href="/contact" className="flex items-center p-3 text-gray-700 hover:bg-gray-300 rounded-lg transition">
             <FaEnvelope className="mr-3" /> Contact
           </Link>
