@@ -1,3 +1,5 @@
+// chat/[chatId]/page.tsx
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -22,7 +24,7 @@ import { format } from "date-fns";
 
 type Message = {
   _id: string;
-  sender: string;
+  sender: 'provider' | 'charity';
   text: string;
   timestamp: string;
   read?: boolean;
@@ -43,7 +45,7 @@ export default function ChatUI() {
   const [otherUser, setOtherUser] = useState({
     name: "Loading...",
     image: "/default-avatar.png",
-    status: "online",
+    isOnline: false,
     lastSeen: null as Date | null
   });
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -77,11 +79,14 @@ export default function ChatUI() {
         setOtherUser({
           name: contact?.name || "Unknown User",
           image: contact?.profileImage || "/default-avatar.png",
-          status: chat.isOnline ? "online" : "last seen " + format(new Date(chat.lastSeen), 'hh:mm a'),
-          lastSeen: chat.lastSeen ? new Date(chat.lastSeen) : null
+          isOnline: contact?.isOnline || false,
+          lastSeen: contact?.lastSeen ? new Date(contact.lastSeen) : null
         });
 
-        setMessages(chat.messages);
+        setMessages(chat.messages?.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp).toISOString()
+        })) || []);
       } catch (error) {
         console.error("Failed to load chat details:", error);
       }
@@ -232,8 +237,18 @@ export default function ChatUI() {
           />
           <div>
             <h2 className="font-semibold">{otherUser.name}</h2>
+            {/* // In the same file, update the status display: */}
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {otherUser.status}
+              {otherUser.isOnline ? (
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Online now
+                </span>
+              ) : (
+                otherUser.lastSeen ? 
+                  `Last seen ${format(new Date(otherUser.lastSeen), 'hh:mm a')}` : 
+                  "Offline"
+              )}
             </p>
           </div>
         </div>

@@ -18,6 +18,19 @@ export const connectSocket = (token: string): Socket => {
     console.log("Connection error:", err.message);
   });
 
+  socket.on("connect", () => {
+    // Send heartbeat every 30 seconds
+    const interval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit("heartbeat");
+      }
+    }, 30000);
+
+    socket.on("disconnect", () => {
+      clearInterval(interval);
+    });
+  });
+
   return socket;
 };
 

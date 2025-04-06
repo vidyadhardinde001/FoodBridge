@@ -325,7 +325,17 @@ export default function ProviderDashboard() {
           </Link>
 
           <button
-            onClick={() => {
+            onClick={async () => {
+              // Update status before logout
+              await fetch('/api/users/status', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({ isOnline: false })
+              });
+              
               localStorage.removeItem("token");
               localStorage.removeItem("role");
               window.location.href = "/login";

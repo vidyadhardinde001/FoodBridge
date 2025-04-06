@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { connectDB } from './db.js';
+import { connectDB, User } from './db.js';
 import jwt from 'jsonwebtoken';
 import { Chat } from './db'; // Import your Chat model
 
@@ -29,9 +29,15 @@ export const initSocket = (server: any): Server => {
     }
   });
 
-  io.on('connection', (socket: Socket) => {
+  io.on('connection', async (socket: Socket) => {
     const user = socket.data.user as User;
     console.log(`User connected: ${user.id}`);
+
+    // Update user as online
+    await User.findByIdAndUpdate(user.id, { 
+      isOnline: true,
+      lastSeen: new Date()
+    });
 
     socket.on('join-chat', (chatId: string) => {
       socket.join(chatId);
@@ -50,11 +56,17 @@ export const initSocket = (server: any): Server => {
         const updatedChat = await Chat.findByIdAndUpdate(
           chatId,
           {
-            $push: { messages: newMessage },
+            $push: { 
+              messages: {
+                sender: user.role, // Add proper sender info
+                text,
+                timestamp: new Date()
+              }
+            },
             $set: { updatedAt: new Date() }
           },
           { new: true }
-        ).populate('charityId providerId');
+        ).populate('charityId providerId messages.sender');
 
         io?.to(chatId).emit("new-message", {
           ...newMessage,
@@ -66,8 +78,18 @@ export const initSocket = (server: any): Server => {
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
+      await User.findByIdAndUpdate(user.id, {
+        isOnline: false,
+        lastSeen: new Date()
+      });
       console.log(`User disconnected: ${user.id}`);
+    });
+
+    socket.on('heartbeat', async () => {
+      await User.findByIdAndUpdate(user.id, {
+        lastSeen: new Date()
+      });
     });
   });
 

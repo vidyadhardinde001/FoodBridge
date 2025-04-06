@@ -7,8 +7,9 @@ export async function GET(req: Request, { params }: { params: { chatId: string }
     await connectDB();
     try {
       const chat = await Chat.findById(params.chatId)
-        .populate('charityId', 'name profileImage')
-        .populate('providerId', 'name profileImage');
+      .populate('charityId', 'name profileImage isOnline lastSeen')
+      .populate('providerId', 'name profileImage isOnline lastSeen')
+      .populate('messages.sender');
         
       return NextResponse.json(chat);
     } catch (error) {

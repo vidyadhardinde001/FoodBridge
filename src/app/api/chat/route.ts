@@ -19,8 +19,8 @@ export async function GET(req: Request) {
       : { charityId: userId };
 
     const chats = await Chat.find(query)
-      .populate('charityId', 'name profileImage')
-      .populate('providerId', 'name profileImage')
+    .populate('charityId', 'name profileImage isOnline lastSeen')
+    .populate('providerId', 'name profileImage isOnline lastSeen')
       .sort({ updatedAt: -1 });
 
     return NextResponse.json(chats);

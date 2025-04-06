@@ -1,3 +1,5 @@
+// chat/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,8 +15,8 @@ interface User {
 
 interface ChatContact {
   _id: string;
-  charityId: User | null;
-  providerId: User | null;
+  charityId: (User & { isOnline?: boolean; lastSeen?: Date }) | null;
+  providerId: (User & { isOnline?: boolean; lastSeen?: Date }) | null;
   messages: any[];
   lastMessage?: {
     text: string;
@@ -41,6 +43,8 @@ export default function ChatList() {
           const role = localStorage.getItem("role");
           setUserRole(role);
 
+          
+
           const res = await fetch("/api/chat", {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -52,6 +56,16 @@ export default function ChatList() {
           const data = await res.json();
           setChats(data.map((chat: any) => ({
             ...chat,
+            charityId: chat.charityId ? {
+              ...chat.charityId,
+              isOnline: chat.charityId.isOnline,
+              lastSeen: chat.charityId.lastSeen
+            } : null,
+            providerId: chat.providerId ? {
+              ...chat.providerId,
+              isOnline: chat.providerId.isOnline,
+              lastSeen: chat.providerId.lastSeen
+            } : null,
             lastMessage: chat.messages?.length > 0 
               ? {
                   text: chat.messages[chat.messages.length - 1].text,
@@ -144,7 +158,11 @@ export default function ChatList() {
                           (e.target as HTMLImageElement).src = "/default-avatar.png";
                         }}
                       />
-                      <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white"></span>
+                      <span className={`absolute bottom-0 right-0 block h-3 w-3 rounded-full ${
+                        (userRole === "provider" ? chat.charityId?.isOnline : chat.providerId?.isOnline) 
+                          ? "bg-green-500" 
+                          : "bg-gray-400"
+                      } ring-2 ring-white`}></span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">

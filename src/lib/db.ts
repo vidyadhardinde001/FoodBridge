@@ -25,6 +25,8 @@ interface UserDocument extends mongoose.Document {
   };
   role: 'provider' | 'charity';
   organizationName?: string;
+  isOnline: boolean;
+  lastSeen: Date;
 }
 
 const UserSchema = new mongoose.Schema<UserDocument>({
@@ -62,6 +64,8 @@ const UserSchema = new mongoose.Schema<UserDocument>({
   },
   role: { type: String, enum: ['provider', 'charity'], required: true },
   organizationName: { type: String },
+  isOnline: { type: Boolean, default: false },
+  lastSeen: { type: Date, default: Date.now }
 });
 
 UserSchema.virtual('location').get(function() {
