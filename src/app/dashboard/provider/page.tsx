@@ -271,11 +271,11 @@ export default function ProviderDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 relative">
+    <div className="min-h-screen bg-gray-100 p-6 relative">
       {/* Header */}
       <header className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Provider Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Welcome!</h1>
           <p className="text-gray-600">Manage your food donations and requests</p>
         </div>
 
@@ -288,7 +288,7 @@ export default function ProviderDashboard() {
             <span className="font-medium">Profile</span>
           </Link>
 
-          <Link 
+          <Link
             href="/chat"
             className="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-100 transition-colors border border-gray-200"
           >
@@ -320,13 +320,25 @@ export default function ProviderDashboard() {
       {/* Main Content */}
       <div className="space-y-6">
         {/* Quick Actions */}
-        <div className="flex justify-end">
+        <div className="flex justify-start">
           <button
             onClick={() => setShowFoodModal(true)}
-            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors"
+            className="relative overflow-hidden group flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
           >
-            <Plus className="w-5 h-5" />
-            <span className="font-medium">Add Surplus Food</span>
+            {/* Animated background elements */}
+            <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+
+            {/* Glow effect */}
+            <span className="absolute -inset-2 bg-blue-400/30 blur-md group-hover:bg-blue-400/50 transition-all duration-500"></span>
+
+            {/* Button content with animation */}
+            <span className="relative z-10 flex items-center gap-2">
+              <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
+              <span className="font-medium tracking-wide">Add Surplus Food</span>
+            </span>
+
+            {/* Ripple effect (will work with JavaScript) */}
+            <span className="absolute inset-0 scale-0 rounded-xl bg-white/30 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-500"></span>
           </button>
         </div>
 
@@ -382,14 +394,14 @@ export default function ProviderDashboard() {
           <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
               <h3 className="text-xl font-semibold text-gray-800">Add Surplus Food</h3>
-              <button 
+              <button
                 onClick={() => setShowFoodModal(false)}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -560,11 +572,11 @@ export default function ProviderDashboard() {
                         </p>
                         <p className="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 5MB)</p>
                       </div>
-                      <input 
-                        type="file" 
-                        name="foodImage" 
-                        accept="image/*" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        name="foodImage"
+                        accept="image/*"
+                        className="hidden"
                         required
                       />
                     </label>
