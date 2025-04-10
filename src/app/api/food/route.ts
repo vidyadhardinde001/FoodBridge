@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 // POST endpoint to create a new food listing
 export async function POST(req: Request) {
   await connectDB();
-  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl,foodType,foodCondition, coordinates,pricingType, price } = await req.json();
+  const { foodName, foodCategory, quantity, pickupLocation, description, imageUrl,foodType,foodCondition, coordinates,pricingType, price, quantityUnit } = await req.json();
   const token = req.headers.get('authorization')?.split(' ')[1];
 
   if (!token) {
@@ -73,6 +73,7 @@ export async function POST(req: Request) {
       foodName,
       foodCategory,
       quantity,
+      quantityUnit,
       pickupLocation,
       pricingType,
       price: pricingType === 'paid' ? price : undefined,
@@ -108,7 +109,7 @@ export async function POST(req: Request) {
         await Notification.create({
           charity: charityUser._id,
           food: food._id,
-          message: `${provider.name} has ${foodCondition} ${foodName} (${quantity}kg) available near ${pickupLocation}`
+          message: `${provider.name} has ${foodCondition} ${foodName} (${quantity}${quantityUnit}) available near ${pickupLocation}`
         });
 
         // 2. Send email notification

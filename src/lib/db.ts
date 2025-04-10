@@ -85,7 +85,8 @@ export const User = mongoose.models.User || mongoose.model<UserDocument>('User',
 interface FoodDocument extends mongoose.Document {
   foodName: string;
   foodCategory: string;
-  quantity: string;
+  quantity: number;
+  quantityUnit: string;
   imageUrl?: string;
   status: 'available' | 'pending' | 'picked_up';
   pickupLocation: string;
@@ -106,7 +107,8 @@ interface FoodDocument extends mongoose.Document {
 const FoodSchema = new mongoose.Schema<FoodDocument>({
   foodName: { type: String, required: true },
   foodCategory: { type: String, required: true },
-  quantity: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  quantityUnit: { type: String, required: true },
   imageUrl: { type: String },
   status: { type: String, enum: ['available', 'pending', 'picked_up'], default: 'available' },
   pickupLocation: { type: String, required: true },

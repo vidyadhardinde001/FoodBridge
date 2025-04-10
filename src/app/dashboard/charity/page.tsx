@@ -21,6 +21,7 @@ interface Food {
   foodName: string;
   foodCategory: string;
   quantity: number;
+  quantityUnit: string;
   provider: {
     _id: string;
     name: string;
@@ -918,9 +919,9 @@ export default function CharityDashboard() {
 
 
                       <div>
-                        <p className="text-gray-600 text-xs font-semibold">QUANTITY (KG)</p>
+                        <p className="text-gray-600 text-xs font-semibold">QUANTITY {food.quantityUnit}</p>
                         <p className="text-green-600 text-xl font-bold animate-pulse drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]">
-                          {food.quantity}
+                          {food.quantity} {food.quantityUnit}
                         </p>
 
                       </div>
