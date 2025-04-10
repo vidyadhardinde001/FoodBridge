@@ -6,7 +6,7 @@ import React from "react";
 import Link from "next/link";
 import { getSocket } from "@/lib/socket-client";
 import { MessageCircle, X, Plus, LogOut, Check, XCircle } from "lucide-react";
-import { UserCircleIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon } from "@heroicons/react/24/outline";
 
 declare global {
   interface Window {
@@ -31,8 +31,9 @@ type Food = {
   foodCategory: string;
   foodType: string;
   quantity: number;
+  quantityUnit: "kg" | "g" | "l" | "ml" | "pieces"; // Add more units as needed
   pickupLocation: string;
-  pricingType: 'free' | 'paid';
+  pricingType: "free" | "paid";
   price?: number;
   description: string;
   imageUrl: string;
@@ -53,18 +54,19 @@ export default function ProviderDashboard() {
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [requests, setRequests] = useState<any[]>([]);
-  const [pricingType, setPricingType] = useState<'free' | 'paid'>('free');
+  const [pricingType, setPricingType] = useState<"free" | "paid">("free");
 
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         const res = await fetch("/api/requests", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const data = await res.json();
-        setRequests(data);
+        setRequests(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching requests:", error);
+        setRequests([]);
       }
     };
     fetchRequests();
@@ -159,8 +161,8 @@ export default function ProviderDashboard() {
         )}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
-      if (data.status !== 'OK' || !data.results[0]) {
-        throw new Error(data.error_message || 'No results found');
+      if (data.status !== "OK" || !data.results[0]) {
+        throw new Error(data.error_message || "No results found");
       }
       return data.results[0].geometry.location;
     } catch (error) {
@@ -211,7 +213,9 @@ export default function ProviderDashboard() {
         coordinates,
         foodCondition: formData.get("foodCondition"),
         pricingType: formData.get("pricingType"),
-        price: formData.get("price") ? Number(formData.get("price")) : undefined,
+        price: formData.get("price")
+          ? Number(formData.get("price"))
+          : undefined,
       };
 
       const res = await fetch("/api/food", {
@@ -241,10 +245,10 @@ export default function ProviderDashboard() {
     if (confirm("Are you sure you want to confirm this request?")) {
       try {
         await fetch(`/api/requests/${requestId}/confirm`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        setRequests(prev => prev.filter(req => req._id !== requestId));
+        setRequests((prev) => prev.filter((req) => req._id !== requestId));
       } catch (error) {
         console.error("Confirmation failed:", error);
       }
@@ -256,14 +260,14 @@ export default function ProviderDashboard() {
     if (reason) {
       try {
         await fetch(`/api/requests/${requestId}/reject`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem("token")}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          body: JSON.stringify({ reason })
+          body: JSON.stringify({ reason }),
         });
-        setRequests(prev => prev.filter(req => req._id !== requestId));
+        setRequests((prev) => prev.filter((req) => req._id !== requestId));
       } catch (error) {
         console.error("Rejection failed:", error);
       }
@@ -276,7 +280,9 @@ export default function ProviderDashboard() {
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Welcome!</h1>
-          <p className="text-gray-600">Manage your food donations and requests</p>
+          <p className="text-gray-600">
+            Manage your food donations and requests
+          </p>
         </div>
 
         <div className="flex items-center gap-4">
@@ -297,13 +303,13 @@ export default function ProviderDashboard() {
 
           <button
             onClick={async () => {
-              await fetch('/api/users/status', {
-                method: 'POST',
+              await fetch("/api/users/status", {
+                method: "POST",
                 headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${localStorage.getItem("token")}`
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
-                body: JSON.stringify({ isOnline: false })
+                body: JSON.stringify({ isOnline: false }),
               });
               localStorage.removeItem("token");
               localStorage.removeItem("role");
@@ -334,7 +340,9 @@ export default function ProviderDashboard() {
             {/* Button content with animation */}
             <span className="relative z-10 flex items-center gap-2">
               <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
-              <span className="font-medium tracking-wide">Add Surplus Food</span>
+              <span className="font-medium tracking-wide">
+                Add Surplus Food
+              </span>
             </span>
 
             {/* Ripple effect (will work with JavaScript) */}
@@ -345,7 +353,9 @@ export default function ProviderDashboard() {
         {/* Pending Requests Section */}
         <section className="bg-white rounded-xl shadow-sm p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Pending Requests</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              Pending Requests
+            </h2>
             <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
               {requests.length} pending
             </span>
@@ -357,12 +367,20 @@ export default function ProviderDashboard() {
             </div>
           ) : (
             <div className="space-y-4">
-              {requests.map(request => (
-                <div key={request._id} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+              {requests.map((request) => (
+                <div
+                  key={request._id}
+                  className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-medium text-gray-800">{request.message}</p>
-                      <p className="text-sm text-gray-500 mt-1">Requested on: {new Date(request.createdAt).toLocaleString()}</p>
+                      <p className="font-medium text-gray-800">
+                        {request.message}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Requested on:{" "}
+                        {new Date(request.createdAt).toLocaleString()}
+                      </p>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -393,7 +411,9 @@ export default function ProviderDashboard() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-800">Add Surplus Food</h3>
+              <h3 className="text-xl font-semibold text-gray-800">
+                Add Surplus Food
+              </h3>
               <button
                 onClick={() => setShowFoodModal(false)}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors"
@@ -471,14 +491,16 @@ export default function ProviderDashboard() {
                     name="pricingType"
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                     required
-                    onChange={(e) => setPricingType(e.target.value as 'free' | 'paid')}
+                    onChange={(e) =>
+                      setPricingType(e.target.value as "free" | "paid")
+                    }
                   >
                     <option value="free">Free</option>
                     <option value="paid">Paid</option>
                   </select>
                 </div>
 
-                {pricingType === 'paid' && (
+                {pricingType === "paid" && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Price (₹)
@@ -489,22 +511,42 @@ export default function ProviderDashboard() {
                       placeholder="Enter price"
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                       min="0"
-                      required={pricingType === 'paid'}
+                      required={pricingType === "paid"}
                     />
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantity (kg)
-                  </label>
-                  <input
-                    type="number"
-                    name="amount"
-                    placeholder="Enter quantity in kg"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      name="amount"
+                      placeholder="e.g., 3.5"
+                      step="0.1"
+                      min="0"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit
+                    </label>
+                    <select
+                      name="quantityUnit"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                      required
+                    >
+                      <option value="kg">Kilograms (kg)</option>
+                      <option value="g">Grams (g)</option>
+                      <option value="l">Liters (l)</option>
+                      <option value="ml">Milliliters (ml)</option>
+                      <option value="pieces">Pieces</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
@@ -568,9 +610,12 @@ export default function ProviderDashboard() {
                           />
                         </svg>
                         <p className="mb-2 text-sm text-gray-500">
-                          <span className="font-semibold">Click to upload</span> or drag and drop
+                          <span className="font-semibold">Click to upload</span>{" "}
+                          or drag and drop
                         </p>
-                        <p className="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 5MB)</p>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, JPEG (MAX. 5MB)
+                        </p>
                       </div>
                       <input
                         type="file"
@@ -599,9 +644,25 @@ export default function ProviderDashboard() {
                 >
                   {isLoading ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Processing...
                     </>
