@@ -60,6 +60,7 @@ export default function CharityDashboard() {
   const [charityLocation, setCharityLocation] = useState({ lat: 0, lng: 0 });
   const [distances, setDistances] = useState<{ [key: string]: string }>({});
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [viewedNotificationIds, setViewedNotificationIds] = useState<Set<string>>(new Set());
   const [showNotifications, setShowNotifications] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'distance' | 'quantity' | null>(null);
@@ -87,70 +88,77 @@ export default function CharityDashboard() {
     setCart([]);
   };
 
-    // Request all items in cart
-    const handleBulkRequest = async () => {
-      setIsRequesting(true);
-      try {
-        const results = await Promise.all(
-          cart.map(async (food) => {
-            try {
-              const res = await fetch("/api/request", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${localStorage.getItem("token")}`
-                },
-                body: JSON.stringify({
-                  foodId: food._id,
-                  charityId: localStorage.getItem("userId")
-                })
-              });
-    
-              if (res.ok) {
-                return { success: true, foodId: food._id };
-              } else {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Request failed');
-              }
-            } catch (error) {
-              console.error(`Request failed for food ${food._id}:`, error);
-              return { success: false, foodId: food._id };
+  // Request all items in cart
+  const handleBulkRequest = async () => {
+    setIsRequesting(true);
+    try {
+      const results = await Promise.all(
+        cart.map(async (food) => {
+          try {
+            const res = await fetch("/api/request", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+              },
+              body: JSON.stringify({
+                foodId: food._id,
+                charityId: localStorage.getItem("userId")
+              })
+            });
+
+            if (res.ok) {
+              return { success: true, foodId: food._id };
+            } else {
+              const errorData = await res.json();
+              throw new Error(errorData.message || 'Request failed');
             }
-          })
-        );
-    
-        const successfulRequests = results.filter(r => r.success);
-        if (successfulRequests.length > 0) {
-          // Show success notification
-          const successDiv = document.createElement('div');
-          successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-          successDiv.textContent = `Successfully requested ${successfulRequests.length} item(s)!`;
-          document.body.appendChild(successDiv);
-          setTimeout(() => successDiv.remove(), 3000);
-          
-          // Remove successfully requested items from cart
-          setCart(prev => prev.filter(item => !successfulRequests.some(r => r.foodId === item._id)));
-        }
-    
-        if (results.some(r => !r.success)) {
-          // Show partial success notification if some failed
-          const warningDiv = document.createElement('div');
-          warningDiv.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-          warningDiv.textContent = `Some requests didn't go through. Please try again.`;
-          document.body.appendChild(warningDiv);
-          setTimeout(() => warningDiv.remove(), 3000);
-        }
-      } catch (error) {
-        console.error("Bulk request failed:", error);
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
-        errorDiv.textContent = 'Failed to send requests. Please try again.';
-        document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
-      } finally {
-        setIsRequesting(false);
+          } catch (error) {
+            console.error(`Request failed for food ${food._id}:`, error);
+            return { success: false, foodId: food._id };
+          }
+        })
+      );
+
+      const successfulRequests = results.filter(r => r.success);
+      if (successfulRequests.length > 0) {
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+        successDiv.textContent = `Successfully requested ${successfulRequests.length} item(s)!`;
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 3000);
+
+        // Remove successfully requested items from cart
+        setCart(prev => prev.filter(item => !successfulRequests.some(r => r.foodId === item._id)));
       }
-    };
+
+      if (results.some(r => !r.success)) {
+        // Show partial success notification if some failed
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+        warningDiv.textContent = `Some requests didn't go through. Please try again.`;
+        document.body.appendChild(warningDiv);
+        setTimeout(() => warningDiv.remove(), 3000);
+      }
+    } catch (error) {
+      console.error("Bulk request failed:", error);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+      errorDiv.textContent = 'Failed to send requests. Please try again.';
+      document.body.appendChild(errorDiv);
+      setTimeout(() => errorDiv.remove(), 3000);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  useEffect(() => {
+    const savedViewed = localStorage.getItem('viewedNotifications');
+    if (savedViewed) {
+      setViewedNotificationIds(new Set(JSON.parse(savedViewed)));
+    }
+  }, []);
   // Update your loadDistances function:
   const loadDistances = async (foodsToCalculate: Food[]) => {
     setLoadingDistances(true);
@@ -322,7 +330,7 @@ export default function CharityDashboard() {
         food.condition?.toLowerCase() === conditionFilter.toLowerCase();
       const matchesCategory = foodCategoryFilter === null ||
         food.foodCategory.toLowerCase() === foodCategoryFilter.toLowerCase();
-      const matchesPricing = pricingFilter === null || 
+      const matchesPricing = pricingFilter === null ||
         food.pricingType === pricingFilter;
 
       return matchesSearch && matchesVeg && matchesCondition && matchesCategory && matchesPricing;
@@ -346,7 +354,7 @@ export default function CharityDashboard() {
     }
 
     setFilteredFoods(sorted);
-  }, [foods, searchQuery, vegFilter, conditionFilter, foodCategoryFilter, distanceValues, sortBy,pricingFilter]);
+  }, [foods, searchQuery, vegFilter, conditionFilter, foodCategoryFilter, distanceValues, sortBy, pricingFilter]);
 
   const handleRequest = async (foodId: string) => {
     try {
@@ -493,9 +501,9 @@ export default function CharityDashboard() {
         console.error("Error fetching notifications:", error);
       }
     };
-
+  
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000); // Refresh every minute
+    const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -514,17 +522,25 @@ export default function CharityDashboard() {
         <header className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-white">Welcome!</h1>
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 hover:bg-white/10 rounded-full"
-            >
-              <BellIcon className="w-6 h-6 text-white" />
-              {notifications.filter(n => !n.isRead).length > 0 && (
-                <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-                  {notifications.filter(n => !n.isRead).length}
-                </span>
-              )}
-            </button>
+          <button
+  onClick={() => {
+    setShowNotifications(!showNotifications);
+    // Mark all current notifications as viewed
+    const newViewedIds = new Set(viewedNotificationIds);
+    notifications.forEach(n => newViewedIds.add(n._id));
+    setViewedNotificationIds(newViewedIds);
+    // Store in localStorage for persistence
+    localStorage.setItem('viewedNotifications', JSON.stringify(Array.from(newViewedIds)));
+  }}
+  className="relative p-2 hover:bg-white/10 rounded-full"
+>
+  <BellIcon className="w-6 h-6 text-white" />
+  {notifications.filter(n => !viewedNotificationIds.has(n._id)).length > 0 && (
+    <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+      {notifications.filter(n => !viewedNotificationIds.has(n._id)).length}
+    </span>
+  )}
+</button>
             <button
               onClick={() => setIsCartOpen(true)}
               className="relative p-2 hover:bg-white/10 rounded-full"
@@ -550,25 +566,25 @@ export default function CharityDashboard() {
               )}
             </button>
             <Link
-            href="/dashboard/charity/profile"
-            className="relative inline-flex items-center justify-center px-5 py-2.5 font-medium text-white transition-all duration-300 ease-out rounded-lg group"
-          >
-            {/* Gradient background */}
-            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg group-hover:from-blue-700 group-hover:to-blue-600"></span>
+              href="/dashboard/charity/profile"
+              className="relative inline-flex items-center justify-center px-5 py-2.5 font-medium text-white transition-all duration-300 ease-out rounded-lg group"
+            >
+              {/* Gradient background */}
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg group-hover:from-blue-700 group-hover:to-blue-600"></span>
 
-            {/* Animated border */}
-            <span className="absolute inset-0 border-2 border-white/20 rounded-lg group-hover:border-white/30 transition-all duration-300"></span>
+              {/* Animated border */}
+              <span className="absolute inset-0 border-2 border-white/20 rounded-lg group-hover:border-white/30 transition-all duration-300"></span>
 
-            {/* Button content with icon */}
-            <span className="relative flex items-center space-x-2">
-              <UserCircleIcon className="w-5 h-5" />
-            </span>
+              {/* Button content with icon */}
+              <span className="relative flex items-center space-x-2">
+                <UserCircleIcon className="w-5 h-5" />
+              </span>
 
-            {/* Hover animation effect */}
-            <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
-            </span>
-          </Link>
+              {/* Hover animation effect */}
+              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
+              </span>
+            </Link>
             <button
               onClick={() => {
                 localStorage.removeItem("token");
@@ -583,139 +599,138 @@ export default function CharityDashboard() {
         </header>
 
         {showNotifications && (
-          <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold mb-2">Notifications</h3>
-              {notifications.length === 0 ? (
-                <p className="text-gray-500">No new notifications</p>
-              ) : (
-                notifications.map((notification) => (
-                  <div
-                    key={notification._id}
-                    className={`p-3 mb-2 rounded-lg ${!notification.isRead ? 'bg-blue-50' : 'bg-gray-100'}`}
-                  >
-                    <p className="text-sm">{notification.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(notification.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-{isCartOpen && (
-  <div className="fixed inset-0 z-50 overflow-y-auto">
-    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-        <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={() => setIsCartOpen(false)}></div>
-      </div>
-      <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-      <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-        <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Selected Food Items ({cart.length})
-          </h3>
-          {cart.length === 0 ? (
-            <p className="text-gray-500">Your cart is empty</p>
-          ) : (
-            <>
-              <div className="space-y-4 max-h-96 overflow-y-auto mb-4">
-                {cart.map((food) => (
-                  <div key={food._id} className="border-b pb-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-center space-x-3">
-                        <img 
-                          src={food.imageUrl ? `/api/proxy-image?url=${encodeURIComponent(food.imageUrl)}` : "/default-avatar.png"} 
-                          alt={food.foodName}
-                          className="w-12 h-12 rounded-md object-cover"
-                        />
-                        <div>
-                          <h4 className="font-medium">{food.foodName}</h4>
-                          <p className="text-sm text-gray-500">{food.provider?.name}</p>
-                          <p className="text-xs text-gray-400">{food.quantity} kg</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => toggleCartItem(food)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="mt-2 flex justify-end space-x-2">
-                      <button
-                        onClick={() => handleIndividualChat(food)}
-                        disabled={isRequesting}
-                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        Chat
-                      </button>
-                      <button
-                        onClick={() => handleRequestConfirmation(food._id)}
-                        disabled={isRequesting}
-                        className="px-3 py-1 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
-                      >
-                        Request
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Bulk Request Button */}
-              <div className="border-t pt-4">
-                <button
-                  onClick={handleBulkRequest}
-                  disabled={isRequesting}
-                  className="w-full flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  {isRequesting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Requesting All Items...
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                      </svg>
-                      Request All {cart.length} Items
-                    </>
-                  )}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-        <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          {cart.length > 0 && (
-            <button
-              type="button"
-              onClick={clearCart}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Clear Cart
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setIsCartOpen(false)}
-            className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+  <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
+    <div className="p-4">
+      <h3 className="text-lg font-semibold mb-2">Notifications</h3>
+      {notifications.length === 0 ? (
+        <p className="text-gray-500">No notifications</p>
+      ) : (
+        notifications.map((notification) => (
+          <div 
+            key={notification._id} 
+            className={`p-3 mb-2 rounded-lg ${viewedNotificationIds.has(notification._id) ? 'bg-gray-50' : 'bg-blue-50'}`}
           >
-            Close
-          </button>
-        </div>
-      </div>
+            <p className="text-sm">{notification.message}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {new Date(notification.createdAt).toLocaleString()}
+            </p>
+          </div>
+        ))
+      )}
     </div>
   </div>
 )}
+        {isCartOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={() => setIsCartOpen(false)}></div>
+              </div>
+              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    Selected Food Items ({cart.length})
+                  </h3>
+                  {cart.length === 0 ? (
+                    <p className="text-gray-500">Your cart is empty</p>
+                  ) : (
+                    <>
+                      <div className="space-y-4 max-h-96 overflow-y-auto mb-4">
+                        {cart.map((food) => (
+                          <div key={food._id} className="border-b pb-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center space-x-3">
+                                <img
+                                  src={food.imageUrl ? `/api/proxy-image?url=${encodeURIComponent(food.imageUrl)}` : "/default-avatar.png"}
+                                  alt={food.foodName}
+                                  className="w-12 h-12 rounded-md object-cover"
+                                />
+                                <div>
+                                  <h4 className="font-medium">{food.foodName}</h4>
+                                  <p className="text-sm text-gray-500">{food.provider?.name}</p>
+                                  <p className="text-xs text-gray-400">{food.quantity} kg</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => toggleCartItem(food)}
+                                className="text-red-500 hover:text-red-700 p-1"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                            <div className="mt-2 flex justify-end space-x-2">
+                              <button
+                                onClick={() => handleIndividualChat(food)}
+                                disabled={isRequesting}
+                                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                Chat
+                              </button>
+                              <button
+                                onClick={() => handleRequestConfirmation(food._id)}
+                                disabled={isRequesting}
+                                className="px-3 py-1 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                              >
+                                Request
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Bulk Request Button */}
+                      <div className="border-t pt-4">
+                        <button
+                          onClick={handleBulkRequest}
+                          disabled={isRequesting}
+                          className="w-full flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          {isRequesting ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Requesting All Items...
+                            </>
+                          ) : (
+                            <>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                              </svg>
+                              Request All {cart.length} Items
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  {cart.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearCart}
+                      className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                      Clear Cart
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsCartOpen(false)}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-gray-200 p-4 rounded-lg shadow-md mb-6">
           <div className="mb-4">
@@ -941,11 +956,10 @@ export default function CharityDashboard() {
 
                     {/* Add near the quantity display */}
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                        food.pricingType === 'free' 
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${food.pricingType === 'free'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-blue-100 text-blue-800'
-                      }`}>
+                        }`}>
                         {food.pricingType === 'free' ? 'FREE' : 'PAID'}
                       </span>
                       {food.pricingType === 'paid' && (

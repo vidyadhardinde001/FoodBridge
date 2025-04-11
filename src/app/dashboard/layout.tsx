@@ -48,9 +48,6 @@ export default function DashboardLayout({
           <Link href="/contact" className="flex items-center p-3 text-gray-700 hover:bg-gray-300 rounded-lg transition">
             <FaEnvelope className="mr-3" /> Contact
           </Link>
-          <Link href="/profile" className="flex items-center p-3 text-gray-700 hover:bg-gray-300 rounded-lg transition">
-            <FaUser className="mr-3" /> Profile
-          </Link>
         </nav>
       </aside>
 
