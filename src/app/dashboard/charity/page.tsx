@@ -11,10 +11,15 @@ import {
   Marker,
   useJsApiLoader,
 } from "@react-google-maps/api";
-import { BellIcon } from "@/app/components/BellIcon";
 import Link from "next/link";
 import ProviderProfileModal from 'src/app/components/ProviderProfileModal';
-import { UserCircleIcon } from '@heroicons/react/24/outline';
+import { 
+  BellIcon, 
+  ShoppingBagIcon, 
+  UserCircleIcon, 
+  UsersIcon, 
+  ArrowRightOnRectangleIcon 
+} from '@heroicons/react/24/outline';
 
 interface Food {
   _id: string;
@@ -501,7 +506,7 @@ export default function CharityDashboard() {
         console.error("Error fetching notifications:", error);
       }
     };
-  
+
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
@@ -514,132 +519,111 @@ export default function CharityDashboard() {
   return (
     <div
       className="w-full mx-auto p-6 min-h-screen bg-fit bg-center"
-      style={{ backgroundImage: "url('/charity.png')" }}
+      style={{ backgroundImage: "url('/charity.jpg')" }}
     >
       <div className="absolute inset-0 bg-black bg-opacity-0"></div>
 
       <div className="relative z-10">
-        <header className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-white">Welcome!</h1>
-          <div className="flex items-center gap-4">
-          <button
-  onClick={() => {
-    setShowNotifications(!showNotifications);
-    // Mark all current notifications as viewed
-    const newViewedIds = new Set(viewedNotificationIds);
-    notifications.forEach(n => newViewedIds.add(n._id));
-    setViewedNotificationIds(newViewedIds);
-    // Store in localStorage for persistence
-    localStorage.setItem('viewedNotifications', JSON.stringify(Array.from(newViewedIds)));
-  }}
-  className="relative p-2 hover:bg-white/10 rounded-full"
->
-  <BellIcon className="w-6 h-6 text-white" />
-  {notifications.filter(n => !viewedNotificationIds.has(n._id)).length > 0 && (
-    <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-      {notifications.filter(n => !viewedNotificationIds.has(n._id)).length}
-    </span>
-  )}
-</button>
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative p-2 hover:bg-white/10 rounded-full"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              {cart.length > 0 && (
-                <span className="absolute top-0 right-0 bg-teal-500 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-                  {cart.length}
-                </span>
-              )}
-            </button>
-            <Link
-              href="/dashboard/charity/profile"
-              className="relative inline-flex items-center justify-center px-5 py-2.5 font-medium text-white transition-all duration-300 ease-out rounded-lg group"
-            >
-              {/* Gradient background */}
-              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-blue-500 rounded-lg group-hover:from-blue-700 group-hover:to-blue-600"></span>
+      <header className="flex justify-between items-center mb-6 px-6 py-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+  {/* Left side - Welcome title */}
+  <h1 className="text-2xl font-semibold text-white">
+    Welcome<span className="text-blue-300">!</span>
+  </h1>
 
-              {/* Animated border */}
-              <span className="absolute inset-0 border-2 border-white/20 rounded-lg group-hover:border-white/30 transition-all duration-300"></span>
+  {/* Right side - Action buttons */}
+  <div className="flex items-center gap-3">
+    {/* Notifications */}
+    <div className="relative">
+      <button
+        onClick={() => {
+          setShowNotifications(!showNotifications);
+          const newViewedIds = new Set(viewedNotificationIds);
+          notifications.forEach(n => newViewedIds.add(n._id));
+          setViewedNotificationIds(newViewedIds);
+          localStorage.setItem('viewedNotifications', JSON.stringify(Array.from(newViewedIds)));
+        }}
+        className="p-2 rounded-lg hover:bg-white/10 transition-colors relative"
+      >
+        <BellIcon className="w-5 h-5 text-white" />
+        {notifications.filter(n => !viewedNotificationIds.has(n._id)).length > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center border-2 border-gray-900">
+            {notifications.filter(n => !viewedNotificationIds.has(n._id)).length}
+          </span>
+        )}
+      </button>
+    </div>
 
-              {/* Button content with icon */}
-              <span className="relative flex items-center space-x-2">
-                <UserCircleIcon className="w-5 h-5" />
-              </span>
+    {/* Cart */}
+    <div className="relative">
+      <button
+        onClick={() => setIsCartOpen(true)}
+        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+      >
+        <ShoppingBagIcon className="w-5 h-5 text-white" />
+        {cart.length > 0 && (
+          <span className="absolute -top-1 -right-1 bg-teal-400 text-gray-900 rounded-full text-xs w-5 h-5 flex items-center justify-center border-2 border-gray-900 font-bold">
+            {cart.length}
+          </span>
+        )}
+      </button>
+    </div>
 
-              {/* Hover animation effect */}
-              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
-              </span>
-            </Link>
-            <Link
-              href="/providers"
-              className="relative inline-flex items-center justify-center px-5 py-2.5 font-medium text-white transition-all duration-300 ease-out rounded-lg group"
-            >
-              {/* Gradient background */}
-              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-grey-600 to-blue-500 rounded-lg group-hover:from-blue-700 group-hover:to-blue-600"></span>
+    {/* Profile */}
+    <Link
+      href="/dashboard/charity/profile"
+      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+    >
+      <UserCircleIcon className="w-5 h-5 text-white" />
+    </Link>
 
-              {/* Animated border */}
-              <span className="absolute inset-0 border-2 border-white/20 rounded-lg group-hover:border-white/30 transition-all duration-300"></span>
+    {/* Providers */}
+    <Link
+      href="/providers"
+      className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors relative group"
+    >
+      <UsersIcon className="w-5 h-5 text-white" />
+      <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        Available Providers
+      </span>
+    </Link>
 
-              {/* Button content with icon */}
-              <span className="relative flex items-center space-x-2">
-                <UserCircleIcon className="w-5 h-5" />
-              </span>
-
-              {/* Hover animation effect */}
-              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
-              </span>
-            </Link>
-            <button
-              onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("role");
-                window.location.href = "/login";
-              }}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-            >
-              Logout
-            </button>
-          </div>
-        </header>
+    {/* Logout */}
+    <button
+      onClick={() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.location.href = "/login";
+      }}
+      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-100 bg-red-600/30 hover:bg-red-600/50 rounded-lg border border-red-400/30 transition-colors"
+    >
+      <ArrowRightOnRectangleIcon className="w-4 h-4" />
+      <span>Logout</span>
+    </button>
+  </div>
+</header>
 
         {showNotifications && (
-  <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-2">Notifications</h3>
-      {notifications.length === 0 ? (
-        <p className="text-gray-500">No notifications</p>
-      ) : (
-        notifications.map((notification) => (
-          <div 
-            key={notification._id} 
-            className={`p-3 mb-2 rounded-lg ${viewedNotificationIds.has(notification._id) ? 'bg-gray-50' : 'bg-blue-50'}`}
-          >
-            <p className="text-sm">{notification.message}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(notification.createdAt).toLocaleString()}
-            </p>
+          <div className="absolute right-4 top-16 z-50 bg-white rounded-lg shadow-lg w-80 max-h-96 overflow-y-auto">
+            <div className="p-4">
+              <h3 className="text-lg font-semibold mb-2">Notifications</h3>
+              {notifications.length === 0 ? (
+                <p className="text-gray-500">No notifications</p>
+              ) : (
+                notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`p-3 mb-2 rounded-lg ${viewedNotificationIds.has(notification._id) ? 'bg-gray-50' : 'bg-blue-50'}`}
+                  >
+                    <p className="text-sm">{notification.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(notification.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        ))
-      )}
-    </div>
-  </div>
-)}
+        )}
         {isCartOpen && (
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -977,8 +961,8 @@ export default function CharityDashboard() {
                     {/* Add near the quantity display */}
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 rounded-full text-xs font-bold ${food.pricingType === 'free'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-blue-100 text-blue-800'
                         }`}>
                         {food.pricingType === 'free' ? 'FREE' : 'PAID'}
                       </span>

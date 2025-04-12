@@ -56,8 +56,16 @@ export default function LoginPage() {
           >
             Login as Charity
           </motion.button>
+          {/* Emergency Mode Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/emergency")}
+            className="w-full bg-red-600 text-white p-3 rounded-lg shadow-md hover:shadow-xl transition font-semibold"
+          >
+            🚨 Emergency Mode
+          </motion.button>
         </motion.div>
-
         {/* Footer */}
         <motion.p
           initial={{ opacity: 0, y: 10 }}
