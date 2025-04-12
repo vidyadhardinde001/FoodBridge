@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     console.log('Registration request:', { role, ...userData, coordinates });
 
     // Validate required fields
-    if (!role || !userData.email || !userData.password || !userData.name || !userData.phone ||  !coordinates) {
+    if (!role || !userData.email || !userData.password || !userData.name || !userData.phone || !userData.fssai || !coordinates) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }

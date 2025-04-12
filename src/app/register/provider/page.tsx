@@ -16,6 +16,7 @@ export default function ProviderRegister() {
     email: "",
     password: "",
     phone: "",
+    fssai: "",
     address: ""
   });
   const [error, setError] = useState("");
@@ -56,6 +57,7 @@ export default function ProviderRegister() {
       !formData.name ||
       !formData.email ||
       !formData.password ||
+      !formData.fssai ||
       !formData.phone
     ) {
       setError("All fields are required");
@@ -121,6 +123,7 @@ export default function ProviderRegister() {
           <input type="email" placeholder="Email" name="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
           <input type="password" placeholder="Password" name="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
           <input type="text" placeholder="Phone" name="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
+          <input type="text" placeholder="Your FSSAI no. here" name="fssai" value={formData.fssai} onChange={(e) => setFormData({ ...formData, fssai: e.target.value })} className="w-full p-3 border rounded-lg bg-white/30 text-white placeholder-white" required />
           <div className="w-full">
             <label className="block text-gray-700 text-sm font-bold mb-2 text-white">
               Location
