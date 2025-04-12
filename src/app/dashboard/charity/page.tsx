@@ -585,6 +585,26 @@ export default function CharityDashboard() {
                 <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
               </span>
             </Link>
+            <Link
+              href="/providers"
+              className="relative inline-flex items-center justify-center px-5 py-2.5 font-medium text-white transition-all duration-300 ease-out rounded-lg group"
+            >
+              {/* Gradient background */}
+              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-grey-600 to-blue-500 rounded-lg group-hover:from-blue-700 group-hover:to-blue-600"></span>
+
+              {/* Animated border */}
+              <span className="absolute inset-0 border-2 border-white/20 rounded-lg group-hover:border-white/30 transition-all duration-300"></span>
+
+              {/* Button content with icon */}
+              <span className="relative flex items-center space-x-2">
+                <UserCircleIcon className="w-5 h-5" />
+              </span>
+
+              {/* Hover animation effect */}
+              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="absolute top-0 left-0 w-1/2 h-full bg-white/10 transform -skew-x-12"></span>
+              </span>
+            </Link>
             <button
               onClick={() => {
                 localStorage.removeItem("token");
@@ -1020,48 +1040,6 @@ export default function CharityDashboard() {
                           </div>
                         </div>
 
-                        {/* Map container
-                        <div className="relative h-64 rounded-xl overflow-hidden border border-gray-200/50">
-                          <LoadScript
-                            googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
-                            libraries={["geometry"]}
-                          >
-                            <GoogleMap
-                              mapContainerStyle={{ width: "100%", height: "100%" }}
-                              center={food.coordinates}
-                              zoom={14}
-                              options={{
-                                styles: [
-                                  {
-                                    featureType: "all",
-                                    elementType: "labels.text.fill",
-                                    stylers: [{ saturation: 36 }, { color: "#333333" }, { lightness: 40 }],
-                                  },
-                                  {
-                                    featureType: "all",
-                                    elementType: "labels.text.stroke",
-                                    stylers: [{ visibility: "on" }, { color: "#ffffff" }, { lightness: 16 }],
-                                  },
-                                ],
-                              }}
-                            >
-                              <Marker position={food.coordinates} />
-                              <Marker
-                                position={charityLocation}
-                                label="You"
-                                icon={{
-                                  path: google.maps.SymbolPath.CIRCLE,
-                                  scale: 8,
-                                  fillColor: "#4285F4",
-                                  fillOpacity: 1,
-                                  strokeWeight: 2,
-                                  strokeColor: "#FFFFFF",
-                                }}
-                              />
-                            </GoogleMap>
-                          </LoadScript>
-
-                        </div> */}
 
                         {/* Action buttons */}
                         <div className="grid grid-cols-2 gap-3">
