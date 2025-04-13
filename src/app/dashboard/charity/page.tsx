@@ -636,13 +636,6 @@ export default function CharityDashboard() {
                             </div>
                             <div className="mt-2 flex justify-end space-x-2">
                               <button
-                                onClick={() => handleIndividualChat(food)}
-                                disabled={isRequesting}
-                                className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                Chat
-                              </button>
-                              <button
                                 onClick={() => handleRequestConfirmation(food._id)}
                                 disabled={isRequesting}
                                 className="px-3 py-1 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
