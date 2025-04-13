@@ -12,7 +12,8 @@ interface EmergencySubmission {
   additionalInfo: string;
   timestamp: Date;
   isAvailable: boolean;
-  dateAvailable: string; // New field
+  dateAvailable: string;
+  type: "emergency";
 }
 
 interface PublicAnnouncement {
@@ -22,7 +23,8 @@ interface PublicAnnouncement {
   message: string;
   isAvailable: boolean;
   timestamp: Date;
-  dateAvailable: string; // New field
+  dateAvailable: string;
+  type: "announcement";
 }
 
 export default function EmergencyPage() {
@@ -35,7 +37,7 @@ export default function EmergencyPage() {
     contact: "",
     additionalInfo: "",
     isAvailable: true,
-    dateAvailable: "", // New field
+    dateAvailable: "",
   });
 
   // Announcement Form State
@@ -44,7 +46,7 @@ export default function EmergencyPage() {
     location: "",
     message: "",
     isAvailable: true,
-    dateAvailable: "", // New field
+    dateAvailable: "",
   });
 
   const [emergencySubmissions, setEmergencySubmissions] = useState<EmergencySubmission[]>([]);
@@ -52,6 +54,7 @@ export default function EmergencyPage() {
   const [activeTab, setActiveTab] = useState<"emergency" | "announcements">("emergency");
   const [showEmergencyForm, setShowEmergencyForm] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [showNotification, setShowNotification] = useState(true);
 
   const handleEmergencyChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,6 +72,7 @@ export default function EmergencyPage() {
       id: Date.now().toString(),
       ...emergencyFormData,
       timestamp: new Date(),
+      type: "emergency"
     };
     
     setEmergencySubmissions([newSubmission, ...emergencySubmissions]);
@@ -91,6 +95,7 @@ export default function EmergencyPage() {
       id: Date.now().toString(),
       ...announcementFormData,
       timestamp: new Date(),
+      type: "announcement"
     };
     
     setPublicAnnouncements([newAnnouncement, ...publicAnnouncements]);
@@ -102,6 +107,16 @@ export default function EmergencyPage() {
       dateAvailable: "",
     });
     setShowAnnouncementForm(false);
+    setShowNotification(true);
+  };
+
+  // Delete functions
+  const deleteEmergencyReport = (id: string) => {
+    setEmergencySubmissions(emergencySubmissions.filter(report => report.id !== id));
+  };
+
+  const deleteAnnouncement = (id: string) => {
+    setPublicAnnouncements(publicAnnouncements.filter(announcement => announcement.id !== id));
   };
 
   return (
@@ -111,8 +126,39 @@ export default function EmergencyPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-8 rounded-2xl shadow-xl mb-8 border border-red-300"
+          className="bg-white p-8 rounded-2xl shadow-xl mb-8 border border-red-300 relative"
         >
+          {/* Notification Bell */}
+          {showNotification && publicAnnouncements.length > 0 && activeTab !== "announcements" && (
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-3 -right-3 cursor-pointer"
+              onClick={() => setActiveTab("announcements")}
+              whileHover={{ scale: 1.1 }}
+            >
+              <div className="bg-red-600 text-white p-2 rounded-full shadow-lg">
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-6 w-6" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" 
+                  />
+                </svg>
+                <span className="absolute -top-1 -right-1 bg-yellow-400 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {publicAnnouncements.length}
+                </span>
+              </div>
+            </motion.div>
+          )}
+
           <h1 className="text-3xl font-bold text-red-600 mb-2 text-center">
             🚨 Food Availability Portal
           </h1>
@@ -130,7 +176,10 @@ export default function EmergencyPage() {
             </button>
             <button
               className={`py-2 px-4 font-medium ${activeTab === "announcements" ? "text-red-600 border-b-2 border-red-600" : "text-gray-500"}`}
-              onClick={() => setActiveTab("announcements")}
+              onClick={() => {
+                setActiveTab("announcements");
+                setShowNotification(false);
+              }}
             >
               Public Announcements
             </button>
@@ -393,9 +442,28 @@ export default function EmergencyPage() {
                         <h3 className="font-bold text-lg">{submission.foodType}</h3>
                         <p className="text-sm opacity-90">{submission.location}</p>
                       </div>
-                      <span className="text-xs bg-white/20 px-2 py-1 rounded">
-                        {submission.isAvailable ? "Available" : "Unavailable"}
-                      </span>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteEmergencyReport(submission.id);
+                        }}
+                        className="text-white hover:text-gray-200"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-5 w-5" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                          />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                   <div className="p-4">
@@ -407,17 +475,17 @@ export default function EmergencyPage() {
                       <span className="font-medium">Contact:</span>
                       <span>{submission.contact}</span>
                     </div>
-                    {submission.dateAvailable && (
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium">Available Until:</span>
-                        <span>{new Date(submission.dateAvailable).toLocaleDateString()}</span>
-                      </div>
-                    )}
                     {submission.additionalInfo && (
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-sm text-gray-600">
                           {submission.additionalInfo}
                         </p>
+                      </div>
+                    )}
+                    {submission.dateAvailable && (
+                      <div className="flex justify-between mb-2">
+                        <span className="font-medium">Available Until:</span>
+                        <span>{new Date(submission.dateAvailable).toLocaleDateString()}</span>
                       </div>
                     )}
                     <div className="mt-4 text-xs text-gray-500">
@@ -434,7 +502,7 @@ export default function EmergencyPage() {
                 animate={{ opacity: 1 }}
                 className="col-span-full text-center py-12 text-gray-500"
               >
-                <p className="text-lg">No emergency reports submitted yet</p>
+                <p className="text-lg">No emergency reports yet</p>
                 <button
                   onClick={() => setShowEmergencyForm(true)}
                   className="mt-4 bg-red-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-700 transition"
@@ -468,12 +536,44 @@ export default function EmergencyPage() {
                           <p className="text-sm opacity-90">Posted by: {announcement.name}</p>
                         )}
                       </div>
-                      <span className="text-xs bg-white/20 px-2 py-1 rounded">
-                        {announcement.isAvailable ? "Available" : "Unavailable"}
-                      </span>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteAnnouncement(announcement.id);
+                        }}
+                        className="text-white hover:text-gray-200"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-5 w-5" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                          />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                   <div className="p-4">
+                    <div className="flex items-center mb-2 text-yellow-600">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-5 w-5 mr-1" 
+                        viewBox="0 0 20 20" 
+                        fill="currentColor"
+                      >
+                        <path 
+                          d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" 
+                        />
+                      </svg>
+                      <span className="font-medium">Public Announcement</span>
+                    </div>
                     <p className="mb-4">{announcement.message}</p>
                     {announcement.dateAvailable && (
                       <div className="flex justify-between mb-2">
