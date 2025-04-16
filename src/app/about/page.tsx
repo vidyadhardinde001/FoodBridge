@@ -5,38 +5,29 @@ const AboutUs = () => {
   const teamMembers = [
     {
       id: 1,
-      name: "John Doe",
-      role: "Founder & CEO",
-      bio: "Former restaurant owner with 15+ years in food industry. Pioneered our food redistribution model after witnessing waste firsthand.",
+      name: "Vidyadhar Dinde",
       image: "/team/john.jpg",
       contact: {
         email: "john@foodbridge.com",
         phone: "+1 (555) 123-4567",
         linkedin: "https://linkedin.com/in/johndoe",
-        twitter: "https://twitter.com/johndoe"
       },
       expertise: ["Food Industry", "Operations", "Business Strategy"]
     },
     {
       id: 2,
-      name: "Jane Smith",
-      role: "Chief Technology Officer",
-      bio: "Full-stack developer specializing in logistics platforms. Previously led engineering at FoodTech Inc. Passionate about tech for social good.",
+      name: "Aditya Khandare",
       image: "/team/jane.jpg",
       contact: {
         email: "jane@foodbridge.com",
         phone: "+1 (555) 987-6543",
         linkedin: "https://linkedin.com/in/janesmith",
-        twitter: "https://twitter.com/janesmith"
       },
       expertise: ["Software Architecture", "AI/ML", "System Scaling"]
     },
     {
       id: 3,
-      name: "Alex Johnson",
-      role: "Head of Operations",
-      bio: "Supply chain expert with a decade in perishable goods logistics. Designed our award-winning distribution network.",
-      image: "/team/alex.jpg",
+      name: "Manali Khedekar",
       contact: {
         email: "alex@foodbridge.com",
         phone: "+1 (555) 456-7890",
@@ -48,31 +39,34 @@ const AboutUs = () => {
 
   return (
     <div className="p-8 min-h-screen bg-gray-50">
-      {/* Project Description and Logo Row */}
-      <div className="flex flex-col md:flex-row items-stretch mb-16 gap-8">
-        {/* Project Description */}
-        <div className="md:w-1/2 bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition duration-300">
-          <h1 className="text-4xl font-extrabold text-green-600 mb-6">About FoodBridge</h1>
-          <p className="text-gray-700 text-lg leading-relaxed mb-4">
-            FoodBridge connects surplus food from businesses to communities in need through our real-time matching platform.
-            We've redirected <span className="font-bold text-green-600">10M+ meals</span> since 2020.
-          </p>
-          <p className="text-gray-700 text-lg leading-relaxed">
-            Our technology helps restaurants, grocers, and producers reduce waste while supporting local shelters and food banks.
-          </p>
-        </div>
+    {/* Project Description and Logo Row */}
+    <div className="flex flex-col md:flex-row items-stretch mb-16 gap-8">
+      {/* Project Description */}
+      <div className="md:w-1/2 bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition duration-300">
+        <h1 className="text-4xl font-extrabold text-green-600 mb-6">About FoodBridge</h1>
+        <p className="text-gray-700 text-lg leading-relaxed mb-4">
+          FoodBridge connects surplus food from businesses to communities in need through our real-time matching platform.
+          We've redirected <span className="font-bold text-green-600">10M+ meals</span> since 2020.
+        </p>
+        <p className="text-gray-700 text-lg leading-relaxed">
+          Our technology helps restaurants, grocers, and producers reduce waste while supporting local shelters and food banks.
+        </p>
+      </div>
 
-        {/* Logo Section */}
-        <div className="md:w-1/2 flex items-center justify-center bg-white rounded-2xl shadow-xl p-6 border border-gray-100 hover:shadow-2xl transition duration-300">
+      {/* Logo Section - Now without card background */}
+      <div className="md:w-1/2 flex items-center justify-center">
+        <div className="relative w-full h-full min-h-[200px] max-w-md mx-auto">
           <Image
-            src="/images/foodbridge.png"
+            src="/foodbridge.png"
             alt="FoodBridge Logo"
-            width={400}
-            height={200}
-            className="object-contain w-full h-auto max-w-xs transition-transform duration-500 hover:scale-105"
+            fill
+            className="object-contain transition-transform duration-500 hover:scale-105"
+            sizes="(max-width: 768px) 80vw, 40vw"
+            priority
           />
         </div>
       </div>
+    </div>
 
       {/* Team Section */}
       <div className="max-w-6xl mx-auto">
@@ -96,9 +90,6 @@ const AboutUs = () => {
               {/* Content */}
               <div className="p-6">
                 <h3 className="text-2xl font-semibold text-gray-800 mb-1">{member.name}</h3>
-                <p className="text-green-600 font-medium mb-4">{member.role}</p>
-
-                <p className="text-gray-600 mb-4 leading-relaxed">{member.bio}</p>
 
                 {/* Expertise */}
                 <div className="mb-5">
@@ -132,14 +123,6 @@ const AboutUs = () => {
                         <FaLinkedin />
                         <a href={member.contact.linkedin} target="_blank" rel="noopener noreferrer">
                           LinkedIn Profile
-                        </a>
-                      </div>
-                    )}
-                    {member.contact.twitter && (
-                      <div className="flex items-center gap-3 hover:text-blue-400 transition-colors">
-                        <FaTwitter />
-                        <a href={member.contact.twitter} target="_blank" rel="noopener noreferrer">
-                          Twitter
                         </a>
                       </div>
                     )}

@@ -38,6 +38,7 @@ export default function ProviderProfile() {
     name: '',
     email: '',
     phone: '',
+    fssai: '',
     address: ''
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -80,6 +81,7 @@ export default function ProviderProfile() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
+        fssai: user.fssai || '',
         address: user.address || ''
       });
     }
@@ -234,6 +236,16 @@ export default function ProviderProfile() {
                       placeholder="your@email.com"
                     />
                   </div>
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">Fssai No.</label>
+                    <input
+                      type="text"
+                      value={editedUser.fssai}
+                      onChange={(e) => setEditedUser({...editedUser, fssai: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+                      placeholder="your fssai no."
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -283,6 +295,17 @@ export default function ProviderProfile() {
                       <p className="text-sm text-gray-500">Email</p>
                       <p className="font-medium text-gray-900">{user.email || 'Not provided'}</p>
                     </div>
+                    
+                  </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="p-3 bg-blue-100 rounded-lg text-blue-600 mt-1">
+                      <EnvelopeIcon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">FSSAI No.</p>
+                      <p className="font-medium text-gray-900">{user.fssai || 'Not provided'}</p>
+                    </div>
+                    
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -303,8 +326,11 @@ export default function ProviderProfile() {
                       <p className="text-sm text-gray-500">Address</p>
                       <p className="font-medium text-gray-900">{user.address || 'Not provided'}</p>
                     </div>
+                    
                   </div>
+                  
                 </div>
+                
               </motion.div>
             )}
           </div>

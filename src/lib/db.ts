@@ -18,6 +18,7 @@ interface UserDocument extends mongoose.Document {
   email: string;
   password: string;
   phone: string;
+  fssai: string;
   address: string;
   coordinates: {
     lat: number;
@@ -51,6 +52,12 @@ const UserSchema = new mongoose.Schema<UserDocument>({
     validate: {
       validator: (v: string) => /^\d{10}$/.test(v),
       message: (props: any) => `${props.value} is not a valid phone number!`
+    }
+  },
+  fssai: { 
+    type: String, 
+    required: function() {
+      return this.role === 'provider';
     }
   },
   address: { 

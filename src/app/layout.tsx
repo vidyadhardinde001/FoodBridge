@@ -13,6 +13,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "FoodBridge",
   description: ".",
+  icons: {
+    icon: "/foodbridge.ico", // Single .ico file reference
+  },
 };
 
 if (typeof window === 'undefined') {
