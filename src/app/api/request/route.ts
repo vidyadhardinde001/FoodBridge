@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   const token = req.headers.get('authorization')?.split(' ')[1];
 
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded: any = jwt.verify(token!, process.env.JWT_SECRET!);
     const food = await Food.findById(foodId)
     .populate('provider')
     .populate('charity');

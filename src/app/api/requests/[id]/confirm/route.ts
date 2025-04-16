@@ -17,21 +17,29 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
 
     await Food.findByIdAndUpdate(request.food._id, {
-      status: 'picked_up', 
+      status: 'provider_confirmed', 
       charity: request.charity._id
     });
 
     // Send confirmation email and notification
     // Add your email sending logic here
 
-    await Notification.create({
-        charity: request.charity._id,
-        provider: request.provider._id,
-        food: request.food._id,
-        message: `Your request for ${request.food.foodName} has been approved!`,
-        type: 'general',
-        status: 'confirmed'
-      });
+    const expirationDate = new Date();
+    expirationDate.setDate(expirationDate.getDate() + 1);
+    // expirationDate.setMinutes(expirationDate.getMinutes() + 1);
+
+    // Create confirmation notification
+    const confirmationNotification = await Notification.create({
+      charity: request.charity._id,
+      provider: request.provider._id,
+      food: request.food._id,
+      message: `Provider confirmed ${request.food.foodName}. Please confirm receipt within 24 hours.`,
+      type: 'confirmation',
+      status: 'pending',
+      expiresAt: expirationDate
+    });
+
+    console.log('Created confirmation notification:', confirmationNotification);
 
 
       if (request.charity.email) {
@@ -44,7 +52,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         );
       }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, notification: confirmationNotification });
   } catch (error) {
     return NextResponse.json({ error: 'Confirmation failed' }, { status: 500 });
   }

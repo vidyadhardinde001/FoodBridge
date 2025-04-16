@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { connectDB, User } from './db.js';
+import { connectDB, User } from './db';
 import jwt from 'jsonwebtoken';
 import { Chat } from './db'; // Import your Chat model
 

@@ -499,6 +499,27 @@ export default function CharityDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleConfirmation = async (foodId: string, confirmed: boolean) => {
+    try {
+      const res = await fetch(`/api/confirm/${foodId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ confirmed })
+      });
+  
+      if (res.ok) {
+        // Refresh data
+        // setNotifications(prev => prev.filter(n => n.food._id !== foodId));
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Confirmation failed:', error);
+    }
+  };
+
 
 
   if (!isLoaded) return <p>Loading Map...</p>;
@@ -595,6 +616,25 @@ export default function CharityDashboard() {
                     className={`p-3 mb-2 rounded-lg ${!notification.isRead ? 'bg-blue-50' : 'bg-gray-100'}`}
                   >
                     <p className="text-sm">{notification.message}</p>
+                    {notification.type === 'confirmation' && (
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => handleConfirmation(notification.food._id, true)}
+                          className="px-2 py-1 bg-green-500 text-white rounded text-sm"
+                        >
+                          Confirm Receipt
+                        </button>
+                        <button
+                          onClick={() => handleConfirmation(notification.food._id, false)}
+                          className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                        >
+                          Not Received
+                        </button>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Expires: {new Date(notification.expiresAt).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500 mt-1">
                       {new Date(notification.createdAt).toLocaleDateString()}
                     </p>

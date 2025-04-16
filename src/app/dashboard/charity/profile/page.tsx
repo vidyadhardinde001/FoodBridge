@@ -92,7 +92,7 @@
         const userId = localStorage.getItem('userId');
         const [userRes, ordersRes, reviewsRes] = await Promise.all([
           fetch(`/api/users/${userId}`),
-          fetch(`/api/food?charity=${userId}&status=picked_up`),
+          fetch(`/api/food?charity=${userId}&status=charity_confirmed`),
           fetch(`/api/reviews?charity=${userId}`)
         ]);
 

@@ -257,7 +257,7 @@ export default function ProviderProfileModal({
                             <p className="text-gray-800 mb-2">{review.comment}</p>
                           </div>
                           <div className="bg-gray-100 px-2 py-1 rounded-full text-xs text-gray-600 whitespace-nowrap">
-                            {review.foodId.foodName}
+                            {review.foodId?.foodName}
                           </div>
                         </div>
                         <p className="text-xs text-gray-400 mt-2">

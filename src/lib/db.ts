@@ -88,7 +88,7 @@ interface FoodDocument extends mongoose.Document {
   quantity: number;
   quantityUnit: string;
   imageUrl?: string;
-  status: 'available' | 'pending' | 'picked_up';
+  status: 'available' | 'pending' | 'picked_up' | 'provider_confirmed' | 'charity_confirmed';
   pickupLocation: string;
   pricingType: 'free' | 'paid';
   price?: number;
@@ -110,7 +110,11 @@ const FoodSchema = new mongoose.Schema<FoodDocument>({
   quantity: { type: Number, required: true },
   quantityUnit: { type: String, required: true },
   imageUrl: { type: String },
-  status: { type: String, enum: ['available', 'pending', 'picked_up'], default: 'available' },
+  status: { 
+    type: String, 
+    enum: ['available', 'pending', 'picked_up', 'provider_confirmed', 'charity_confirmed'], // Add new statuses
+    default: 'available' 
+  },
   pickupLocation: { type: String, required: true },
   pricingType: {
     type: String,
@@ -160,7 +164,7 @@ interface ChatDocument extends mongoose.Document {
 }
 
 interface MessageDocument extends mongoose.Document {
-  sender: 'charity' | 'provider';
+  sender: string |'charity' | 'provider';
   text: string;
   timestamp: Date;
 }
@@ -190,9 +194,10 @@ interface NotificationDocument extends mongoose.Document {
   food: mongoose.Types.ObjectId;
   isRead: boolean;
   createdAt: Date;
-  type: 'request' | 'general';
+  type: 'request' | 'general' | 'confirmation' | 'reminder' ;
   status: 'pending' | 'confirmed' | 'rejected';
   reason?: string;
+  expiresAt: Date;
 }
 
 const NotificationSchema = new mongoose.Schema<NotificationDocument>({
@@ -214,9 +219,10 @@ const NotificationSchema = new mongoose.Schema<NotificationDocument>({
   createdAt: { type: Date, default: Date.now },
   type: { 
     type: String, 
-    enum: ['request', 'general'], 
+    enum: ['request', 'general', 'confirmation', 'reminder'], // Add new types
     required: true 
   },
+  expiresAt: { type: Date },
   status: { 
     type: String, 
     enum: ['pending', 'confirmed', 'rejected'], 
@@ -261,7 +267,7 @@ export const connectDB = async () => {
       w: 'majority',
     });
     await User.collection.createIndex({ location: "2dsphere" });
-    console.log('MongoDB connected');
+    // console.log('MongoDB connected');
     await Chat.collection.createIndex({ providerId: 1, charityId: 1, updatedAt: -1 });
   } catch (error) {
     console.error('MongoDB connection error:', error);

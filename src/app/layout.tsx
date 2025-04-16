@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google"; // Import Poppins font
 import "./globals.css";
 import { twMerge } from "tailwind-merge";
+import { setupConfirmationChecks } from '@/lib/cron'; 
 
 // Configure Poppins font
 const poppins = Poppins({
@@ -13,6 +14,10 @@ export const metadata: Metadata = {
   title: "FoodBridge",
   description: ".",
 };
+
+if (typeof window === 'undefined') {
+  setupConfirmationChecks();
+}
 
 export default function RootLayout({
   children,

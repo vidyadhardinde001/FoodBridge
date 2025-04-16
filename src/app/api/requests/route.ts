@@ -10,7 +10,7 @@ export async function GET(req: Request) {
   const token = req.headers.get('authorization')?.split(' ')[1];
 
   try {
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const decoded: any = jwt.verify(token!, process.env.JWT_SECRET!);
     const requests = await Notification.find({
       provider: decoded.id,
       type: 'request',
